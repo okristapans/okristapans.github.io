@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>ZINE STUDIO</title>
+    <title>ZINE STUDIO — TRUE MERGED SPREAD (NO DUPLICATION)</title>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Permanent+Marker&family=Special+Elite&family=Press+Start+2P&family=Archivo+Black&family=Anton&family=Monoton&family=Righteous&family=Luckiest+Guy&family=Rubik+Bubbles&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,6 +43,38 @@
         #print-btn { position: absolute; top: 20px; right: 20px; background: var(--accent); color: white; border: var(--border); padding: 12px 24px; font-weight: bold; cursor: pointer; box-shadow: 4px 4px 0 var(--fg); z-index: 100; transition: transform 0.1s; }
         #print-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--fg); }
         .print-window { display: none; }
+
+        /* ---------- MOBILE RESPONSIVE MEDIA QUERY ---------- */
+        @media (max-width: 768px) {
+            body { flex-direction: column; height: 100vh; overflow: hidden; }
+            
+            /* Sidebar turns into a horizontal swipe menu like Dirty Little Zine */
+            #sidebar { width: 100%; height: auto; min-height: 55px; border-right: none; border-bottom: var(--border); flex-direction: row; overflow-x: auto; overflow-y: hidden; white-space: nowrap; flex-shrink: 0; -webkit-overflow-scrolling: touch; }
+            .branding { padding: 12px 15px; font-size: 0.8rem; border-bottom: none; border-right: var(--border); display: flex; align-items: center; justify-content: center; }
+            #nav-list { display: flex; flex-direction: row; }
+            .nav-item { padding: 12px 18px; border-bottom: none; border-right: 1px solid #ddd; font-size: 0.75rem; white-space: nowrap; display: flex; align-items: center; }
+            
+            /* Flexible viewport area rearranging tools layout */
+            #main-view { flex: 1; display: flex; flex-direction: column; overflow-y: auto; min-height: 0; }
+            
+            /* Control stacking order via Flex properties */
+            #canvas-area { order: 1; padding: 15px; flex-shrink: 0; height: 40vh; min-height: 250px; }
+            #toolbar { order: 2; flex-direction: column; min-height: auto; flex-shrink: 0; padding: 15px; gap: 20px; border-top: var(--border); }
+            #print-btn { order: 3; position: relative; top: auto; right: auto; margin: 10px 15px 25px 15px; width: calc(100% - 30px); text-align: center; box-shadow: 4px 4px 0 var(--fg); transform: none; }
+            
+            .preview-box { max-height: 100%; max-width: 100%; }
+            .preview-box.portrait { height: 100%; width: auto; }
+            .preview-box.landscape { width: 100%; height: auto; max-height: 100%; }
+            
+            .tool-panel { border-right: none; border-bottom: 2px dashed #e0e0e0; padding-right: 0; padding-bottom: 20px; width: 100%; }
+            .tool-panel:last-child { border-bottom: none; padding-bottom: 0; }
+            .dropzone { min-height: 90px; }
+            
+            /* Prevent form-zoom trigger constraints on mobile safari / android */
+            select, button, textarea, input, .align-btn, .apply-btn { font-size: 16px !important; min-height: 44px; }
+            .row { gap: 12px; }
+        }
+
         @media print {
             @page { size: portrait; margin: 0; }
             body { margin: 0; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -83,10 +115,6 @@
         let dragTarget = null;
 
         // ---------- SPREAD GEOMETRY ----------
-        // For each spread, work out which sheet it lives on and whether the two
-        // pages sit side-by-side ('h') or stacked ('v') in the print grid, plus
-        // which page comes first in reading order (top-left-most). This drives
-        // how a "merged" spread is rendered as a single spanning grid cell.
         function findPos(tpl, page) {
             const idx = tpl.indexOf(page);
             if (idx === -1) return null;
@@ -100,7 +128,6 @@
             const posL = findPos(tpl, pL), posR = findPos(tpl, pR);
             if (!posL || !posR) return null;
             const horizontal = posL.row === posR.row;
-            // "first" = the page whose grid cell comes first in the template array
             const first = posL.idx < posR.idx ? pL : pR;
             const second = first === pL ? pR : pL;
             const bothInverted = invertedPages.includes(pL) && invertedPages.includes(pR);
@@ -118,31 +145,13 @@
 
         function getCellBg(p) { return document.getElementById(`print-bg-${p}`); }
         function getCellText(p) { return document.getElementById(`print-text-${p}`); }
-
         function getBgPos(x,y) { return `calc(50% + ${x}%) calc(50% + ${y}%)`; }
-
-        // Cover text size as a pure fraction of its own container's width
-        // (cqw), not the browser viewport (vw) and not clamped to an
-        // absolute px floor/ceiling - any clamp() bound expressed in rem/px
-        // would be reached at different ratios for differently-sized
-        // containers, breaking the preview<->print match. Both the preview
-        // text-overlay-container and the print .p-text cell declare
-        // `container-type: inline-size`, so Ncqw always means "N% of this
-        // box's own width" identically in both contexts.
         function coverFontSizeCss(fontSize) { return `${fontSize}cqw`; }
 
-        // Build a sheet's grid with EXPLICIT placement for every position
-        // (grid-column-start / grid-row-start), so that a merged spread can
-        // span two tracks via grid-column/row-end without disturbing the
-        // placement of any other cell. Cells that are the "second half" of a
-        // merged spread are not rendered at all.
         function buildPrintGrid(id, tpl) {
             const c = document.getElementById(id); if (!c) return;
             c.innerHTML = '';
 
-            // Figure out, for each page number in this template, whether it is
-            // part of a currently-merged spread and if so whether it's the
-            // first or second half.
             const mergedFirst = {}, mergedSecond = {}, mergedGeom = {};
             viewsData.forEach(d => {
                 if (d.type !== 'spread' || !d.merged || !d.imgL) return;
@@ -154,7 +163,7 @@
             });
 
             tpl.forEach((p, idx) => {
-                const row = Math.floor(idx / 4) + 1; // CSS grid lines are 1-indexed
+                const row = Math.floor(idx / 4) + 1;
                 const col = (idx % 4) + 1;
                 if (p === 0) {
                     const cell = document.createElement('div');
@@ -164,7 +173,7 @@
                     c.appendChild(cell);
                     return;
                 }
-                if (mergedSecond[p]) return; // second half of a merged spread: skip entirely
+                if (mergedSecond[p]) return;
 
                 const cell = document.createElement('div');
                 cell.className = 'cell';
@@ -187,9 +196,6 @@
         }
 
         function updatePrint() {
-            // Rebuild both sheets from scratch. This is what lets a merged
-            // spread render as one spanning cell with a single background -
-            // no overlay layer, no getBoundingClientRect, no timing issues.
             buildPrintGrid('sheet-1', sheet1Template);
             buildPrintGrid('sheet-2', sheet2Template);
 
@@ -220,16 +226,27 @@
             });
         }
 
-        // ---- DRAG HANDLERS (unified) ----
+        // ---- UNIFIED DRAG HANDLERS (MOUSE & TOUCH GESTURES) ----
         function initDrag() {
             const preview = document.getElementById('preview');
             if (!preview) return;
+            
+            // Desktop Mouse Events
             preview.addEventListener('mousedown', onDragStart);
             window.addEventListener('mousemove', onDragMove);
             window.addEventListener('mouseup', onDragEnd);
+            
+            // Mobile Touch Events
+            preview.addEventListener('touchstart', onDragStart, { passive: false });
+            window.addEventListener('touchmove', onDragMove, { passive: false });
+            window.addEventListener('touchend', onDragEnd);
         }
 
         function onDragStart(e) {
+            const isTouch = e.type.startsWith('touch');
+            const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+            const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+
             const slot = e.target.closest('.page-slot');
             if (!slot) return;
             const d = viewsData[activeView];
@@ -249,22 +266,27 @@
             }
             if (!targetType) return;
             dragActive = true;
-            dragStartX = e.clientX;
-            dragStartY = e.clientY;
+            dragStartX = clientX;
+            dragStartY = clientY;
             dragTarget = targetType;
             if (targetType === 'cover') { startOffsetX = d.imgOffsetX||0; startOffsetY = d.imgOffsetY||0; }
             else if (targetType === 'merged') { startOffsetX = d.mergedOffset?.x||0; startOffsetY = d.mergedOffset?.y||0; }
             else if (targetType === 'left') { startOffsetX = d.offsetL?.x||0; startOffsetY = d.offsetL?.y||0; }
             else if (targetType === 'right') { startOffsetX = d.offsetR?.x||0; startOffsetY = d.offsetR?.y||0; }
-            e.preventDefault();
+            
+            if (isTouch) e.preventDefault();
         }
 
         function onDragMove(e) {
             if (!dragActive) return;
+            const isTouch = e.type.startsWith('touch');
+            const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+            const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+
             const d = viewsData[activeView];
             if (!d) return;
-            const deltaX = e.clientX - dragStartX;
-            const deltaY = e.clientY - dragStartY;
+            const deltaX = clientX - dragStartX;
+            const deltaY = clientY - dragStartY;
             const sens = 0.4;
             let newX = startOffsetX - deltaX * sens;
             let newY = startOffsetY - deltaY * sens;
@@ -291,13 +313,11 @@
                 const rightSlot = document.querySelectorAll('#preview .page-slot')[1];
                 if (rightSlot) rightSlot.style.backgroundPosition = getBgPos(newX, newY);
             }
+            if (isTouch) e.preventDefault();
         }
 
         function onDragEnd() {
-            if (dragActive) {
-                // Refresh print overlays after drag ends
-                updatePrint();
-            }
+            if (dragActive) { updatePrint(); }
             dragActive = false;
             dragTarget = null;
         }
@@ -358,7 +378,7 @@
             updatePrint();
         }
 
-        // ---- TOOLBAR HELPERS (unchanged) ----
+        // ---- TOOLBAR HELPERS ----
         function updateFontSizeLive(v){
             const d=viewsData[activeView]; if(d.type!=='cover') return;
             d.fontSize=parseFloat(v);
@@ -377,6 +397,7 @@
             const dh=e=>{e.preventDefault(); dz.classList.add('dragover');}; const dl=()=>{dz.classList.remove('dragover');}; const dp=e=>{e.preventDefault(); dz.classList.remove('dragover'); const f=e.dataTransfer.files; if(f.length>0){ const key=dz.getAttribute('data-upload-key')||'imgL'; handleFileUpload(f[0],key); }};
             dz._dh=dh; dz._dl=dl; dz._dp=dp; dz.addEventListener('dragover',dh); dz.addEventListener('dragleave',dl); dz.addEventListener('drop',dp); }); }
         function handleFileUpload(file,key){ if(!file||!file.type.startsWith('image/')) return; const r=new FileReader(); r.onload=ev=>{ viewsData[activeView][key]=ev.target.result; renderUI(); }; r.readAsDataURL(file); }
+        
         function buildToolbar(d){
             const tb=document.getElementById('toolbar'); if(!tb) return;
             if(d.type==='cover'){
@@ -397,7 +418,18 @@
 
         function init(){
             const nav=document.getElementById('nav-list'); nav.innerHTML='';
-            viewsData.forEach((v,i)=>{ const div=document.createElement('div'); div.className='nav-item'+(i===0?' active':''); div.textContent=v.label; div.onclick=()=>{activeView=i; renderUI();}; nav.appendChild(div); });
+            viewsData.forEach((v,i)=>{
+                const div=document.createElement('div');
+                div.className='nav-item'+(i===0?' active':'');
+                div.textContent=v.label;
+                div.onclick=()=>{
+                    activeView=i;
+                    renderUI();
+                    // Smoothly center the selected tab on mobile swipe bar
+                    div.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                };
+                nav.appendChild(div);
+            });
             renderUI();
             initDrag();
             initPreviewDrop();
