@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ZINE STUDIO — TRUE MERGED SPREAD (NO DUPLICATION)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Permanent+Marker&family=Special+Elite&family=Press+Start+2P&family=Archivo+Black&family=Anton&family=Monoton&family=Righteous&family=Luckiest+Guy&family=Rubik+Bubbles&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --bg: #f7f7f5; --fg: #111; --font: 'Courier New', monospace; --border: 3px solid var(--fg); --accent: #ff3e00; }
+        body { font-family: var(--font); background: var(--bg); color: var(--fg); display: flex; height: 100vh; overflow: hidden; text-transform: uppercase; }
+        #sidebar { width: 260px; background: #fff; border-right: var(--border); display: flex; flex-direction: column; overflow-y: auto; z-index: 10; }
+        .branding { padding: 20px; border-bottom: var(--border); font-weight: bold; font-size: 1.2rem; background: var(--fg); color: #fff; letter-spacing: -1px; }
+        .nav-item { padding: 14px 20px; cursor: pointer; border-bottom: 1px solid #ddd; font-weight: bold; font-size: 0.85rem; transition: background 0.2s; }
+        .nav-item:hover { background: #f0f0f0; }
+        .nav-item.active { background: var(--fg); color: #fff; }
+        #main-view { flex: 1; display: flex; flex-direction: column; position: relative; min-height: 0; }
+        #canvas-area { flex: 1; background: #dbdbdb; display: flex; align-items: center; justify-content: center; padding: 30px; min-height: 0; }
+        .preview-box { background: #fff; border: 2px dashed #999; box-shadow: 0 15px 35px rgba(0,0,0,0.15); display: flex; position: relative; overflow: hidden; max-width: 100%; max-height: 100%; user-select: none; }
+        .preview-box.portrait { height: 90%; aspect-ratio: 1 / 1.414; }
+        .preview-box.landscape { height: 90%; aspect-ratio: 2 / 1.414; }
+        .page-slot { flex: 1; background-size: cover; background-repeat: no-repeat; background-color: #fff; position: relative; overflow: hidden; cursor: grab; }
+        .page-slot:active { cursor: grabbing; }
+        .spine-line { border-right: 2px dashed rgba(0,0,0,0.25); }
+        .drag-hint { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; font-size: 10px; padding: 4px 8px; border-radius: 4px; pointer-events: none; z-index: 10; font-family: monospace; text-transform: none; }
+        .text-overlay-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; padding: 10%; pointer-events: none; z-index: 5; overflow: auto; container-type: inline-size; }
+        .text-overlay-container div { word-break: break-word; overflow-wrap: break-word; max-width: 100%; line-height: 1.2; }
+        #toolbar { background: #fff; border-top: var(--border); padding: 15px 20px; display: flex; gap: 20px; overflow-x: auto; min-height: 240px; flex-shrink: 0; }
+        .tool-panel { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 8px; border-right: 2px dashed #e0e0e0; padding-right: 20px; }
+        .tool-panel:last-child { border-right: none; }
+        .tool-panel strong { border-bottom: 2px solid var(--fg); padding-bottom: 4px; font-size: 0.8rem; }
+        .dropzone { border: 2px dashed #aaa; background: #fafafa; padding: 10px; text-align: center; cursor: pointer; position: relative; transition: all 0.2s; flex: 1; display: flex; align-items: center; justify-content: center; }
+        .dropzone.dragover { background: #e0e0e0; border-color: var(--accent); }
+        .dropzone input { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
+        select, button { font-family: var(--font); padding: 6px; text-transform: uppercase; border: 1px solid var(--fg); background: #fff; cursor: pointer; }
+        button:hover { background: #f0f0f0; }
+        textarea { width: 100%; flex: 1; resize: none; padding: 6px; border: 1px solid var(--fg); font-family: sans-serif; font-size: 0.85rem; }
+        .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .apply-btn { background: var(--fg); color: #fff; font-weight: bold; padding: 8px; border: none; }
+        .align-btn-group { display: flex; gap: 4px; background: #f0f0f0; padding: 4px; border-radius: 4px; }
+        .align-btn { flex: 1; padding: 6px; font-weight: bold; background: white; border: 1px solid #ccc; cursor: pointer; text-align: center; }
+        .align-btn.active { background: var(--fg); color: white; border-color: var(--fg); }
+        #print-btn { position: absolute; top: 20px; right: 20px; background: var(--accent); color: white; border: var(--border); padding: 12px 24px; font-weight: bold; cursor: pointer; box-shadow: 4px 4px 0 var(--fg); z-index: 100; transition: transform 0.1s; }
+        #print-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--fg); }
+        .print-window { display: none; }
+        @media print {
+            @page { size: portrait; margin: 0; }
+            body { margin: 0; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            #sidebar, #main-view, #print-btn { display: none !important; }
+            .print-window { display: block !important; width: 100vw; height: 100vh; }
+            .sheet-page { display: grid; grid-template-columns: repeat(4, 25vw); grid-template-rows: repeat(4, 25vh); width: 100vw; height: 100vh; page-break-after: always; position: relative; }
+            .cell { width: 100%; height: 100%; position: relative; background-color: #fff; overflow: hidden; }
+            .cell-bg { position: absolute; width: 100%; height: 100%; top: 0; left: 0; background-size: cover; background-repeat: no-repeat; background-position: center; z-index: 1; }
+            .p-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 10%; display: flex; flex-direction: column; z-index: 2; word-break: break-word; overflow-wrap: break-word; container-type: inline-size; }
+            .p-text div { line-height: 1.2; }
+            .rot180 { transform: rotate(180deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar"><div class="branding">ZINE LAYOUT ENGINE</div><div id="nav-list"></div></div>
+    <div id="main-view"><button id="print-btn" onclick="window.print()">PRINT BOOKLET</button><div id="canvas-area"><div id="preview" class="preview-box portrait"></div></div><div id="toolbar"></div></div>
+    <div class="print-window"><div class="sheet-page" id="sheet-1"></div><div class="sheet-page" id="sheet-2"></div></div>
+
+    <script>
+        // ---------- DATA ----------
+        const viewsData = [
+            { id: 0, label: "FRONT COVER (1)", type: "cover", pages: [1], img: null, imgOffsetX: 0, imgOffsetY: 0, text: "ZINE TITLE", font: "'Special Elite', cursive", fontSize: 5, align: "center", justify: "center", overlayType: "black", overlayOp: 0, color: "#000000" },
+            { id: 1, label: "PAGES 2-3", type: "spread", pages: [2, 3], merged: false, imgL: null, imgR: null, offsetL: {x:0,y:0}, offsetR: {x:0,y:0}, mergedOffset: {x:0,y:0} },
+            { id: 2, label: "PAGES 4-5", type: "spread", pages: [4, 5], merged: false, imgL: null, imgR: null, offsetL: {x:0,y:0}, offsetR: {x:0,y:0}, mergedOffset: {x:0,y:0} },
+            { id: 3, label: "PAGES 6-7", type: "spread", pages: [6, 7], merged: false, imgL: null, imgR: null, offsetL: {x:0,y:0}, offsetR: {x:0,y:0}, mergedOffset: {x:0,y:0} },
+            { id: 4, label: "PAGES 8-9", type: "spread", pages: [8, 9], merged: false, imgL: null, imgR: null, offsetL: {x:0,y:0}, offsetR: {x:0,y:0}, mergedOffset: {x:0,y:0} },
+            { id: 5, label: "PAGES 10-11", type: "spread", pages: [10, 11], merged: false, imgL: null, imgR: null, offsetL: {x:0,y:0}, offsetR: {x:0,y:0}, mergedOffset: {x:0,y:0} },
+            { id: 6, label: "PAGES 12-13", type: "spread", pages: [12, 13], merged: false, imgL: null, imgR: null, offsetL: {x:0,y:0}, offsetR: {x:0,y:0}, mergedOffset: {x:0,y:0} },
+            { id: 7, label: "PAGES 14-15", type: "spread", pages: [14, 15], merged: false, imgL: null, imgR: null, offsetL: {x:0,y:0}, offsetR: {x:0,y:0}, mergedOffset: {x:0,y:0} },
+            { id: 8, label: "BACK COVER (16)", type: "cover", pages: [16], img: null, imgOffsetX: 0, imgOffsetY: 0, text: "THE END", font: "'Courier New', monospace", fontSize: 4, align: "center", justify: "center", overlayType: "black", overlayOp: 0, color: "#000000" }
+        ];
+        const sheet1Template = [0,0,0,0, 15,14,9,8, 16,1,6,7, 0,0,0,0];
+        const sheet2Template = [0,11,12,0, 0,10,13,0, 0,5,2,0, 0,4,3,0];
+        const invertedPages = [3,4,8,9,10,13,14,15];
+        let activeView = 0;
+        let dragActive = false, dragStartX = 0, dragStartY = 0, startOffsetX = 0, startOffsetY = 0;
+        let dragTarget = null;
+
+        // ---------- SPREAD GEOMETRY ----------
+        // For each spread, work out which sheet it lives on and whether the two
+        // pages sit side-by-side ('h') or stacked ('v') in the print grid, plus
+        // which page comes first in reading order (top-left-most). This drives
+        // how a "merged" spread is rendered as a single spanning grid cell.
+        function findPos(tpl, page) {
+            const idx = tpl.indexOf(page);
+            if (idx === -1) return null;
+            return { row: Math.floor(idx / 4), col: idx % 4, idx };
+        }
+        function getSpreadGeometry(d) {
+            if (d.type !== 'spread') return null;
+            const [pL, pR] = d.pages;
+            let tpl = sheet1Template.includes(pL) ? sheet1Template : sheet2Template;
+            const sheetId = tpl === sheet1Template ? 'sheet-1' : 'sheet-2';
+            const posL = findPos(tpl, pL), posR = findPos(tpl, pR);
+            if (!posL || !posR) return null;
+            const horizontal = posL.row === posR.row;
+            // "first" = the page whose grid cell comes first in the template array
+            const first = posL.idx < posR.idx ? pL : pR;
+            const second = first === pL ? pR : pL;
+            const bothInverted = invertedPages.includes(pL) && invertedPages.includes(pR);
+            return { sheetId, horizontal, first, second, bothInverted, tpl };
+        }
+
+        const fontOptions = [
+            { name: "Typewriter", value: "'Special Elite', cursive" }, { name: "Marker", value: "'Permanent Marker', cursive" },
+            { name: "Bold Sans", value: "'Bebas Neue', sans-serif" }, { name: "Courier Clean", value: "'Courier New', monospace" },
+            { name: "Arcade", value: "'Press Start 2P', cursive" }, { name: "Archivo Black", value: "'Archivo Black', sans-serif" },
+            { name: "Anton", value: "'Anton', sans-serif" }, { name: "Monoton", value: "'Monoton', cursive" },
+            { name: "Righteous", value: "'Righteous', cursive" }, { name: "Luckiest Guy", value: "'Luckiest Guy', cursive" },
+            { name: "Rubik Bubbles", value: "'Rubik Bubbles', cursive" }, { name: "Georgia Serif", value: "Georgia, serif" }
+        ];
+
+        function getCellBg(p) { return document.getElementById(`print-bg-${p}`); }
+        function getCellText(p) { return document.getElementById(`print-text-${p}`); }
+
+        function getBgPos(x,y) { return `calc(50% + ${x}%) calc(50% + ${y}%)`; }
+
+        // Cover text size as a pure fraction of its own container's width
+        // (cqw), not the browser viewport (vw) and not clamped to an
+        // absolute px floor/ceiling - any clamp() bound expressed in rem/px
+        // would be reached at different ratios for differently-sized
+        // containers, breaking the preview<->print match. Both the preview
+        // text-overlay-container and the print .p-text cell declare
+        // `container-type: inline-size`, so Ncqw always means "N% of this
+        // box's own width" identically in both contexts.
+        function coverFontSizeCss(fontSize) { return `${fontSize}cqw`; }
+
+        // Build a sheet's grid with EXPLICIT placement for every position
+        // (grid-column-start / grid-row-start), so that a merged spread can
+        // span two tracks via grid-column/row-end without disturbing the
+        // placement of any other cell. Cells that are the "second half" of a
+        // merged spread are not rendered at all.
+        function buildPrintGrid(id, tpl) {
+            const c = document.getElementById(id); if (!c) return;
+            c.innerHTML = '';
+
+            // Figure out, for each page number in this template, whether it is
+            // part of a currently-merged spread and if so whether it's the
+            // first or second half.
+            const mergedFirst = {}, mergedSecond = {}, mergedGeom = {};
+            viewsData.forEach(d => {
+                if (d.type !== 'spread' || !d.merged || !d.imgL) return;
+                const geo = getSpreadGeometry(d);
+                if (!geo) return;
+                mergedFirst[geo.first] = d;
+                mergedSecond[geo.second] = d;
+                mergedGeom[geo.first] = geo;
+            });
+
+            tpl.forEach((p, idx) => {
+                const row = Math.floor(idx / 4) + 1; // CSS grid lines are 1-indexed
+                const col = (idx % 4) + 1;
+                if (p === 0) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.style.gridColumnStart = col;
+                    cell.style.gridRowStart = row;
+                    c.appendChild(cell);
+                    return;
+                }
+                if (mergedSecond[p]) return; // second half of a merged spread: skip entirely
+
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.id = `print-cell-${p}`;
+                cell.style.gridColumnStart = col;
+                cell.style.gridRowStart = row;
+
+                if (mergedFirst[p]) {
+                    const geo = mergedGeom[p];
+                    if (geo.horizontal) cell.style.gridColumnEnd = 'span 2';
+                    else cell.style.gridRowEnd = 'span 2';
+                    if (geo.bothInverted) cell.classList.add('rot180');
+                } else if (invertedPages.includes(p)) {
+                    cell.classList.add('rot180');
+                }
+
+                cell.innerHTML = `<div class="cell-bg" id="print-bg-${p}"></div><div class="p-text" id="print-text-${p}"></div>`;
+                c.appendChild(cell);
+            });
+        }
+
+        function updatePrint() {
+            // Rebuild both sheets from scratch. This is what lets a merged
+            // spread render as one spanning cell with a single background -
+            // no overlay layer, no getBoundingClientRect, no timing issues.
+            buildPrintGrid('sheet-1', sheet1Template);
+            buildPrintGrid('sheet-2', sheet2Template);
+
+            viewsData.forEach(d=>{
+                if(d.type==='cover'){
+                    const pg=d.pages[0], bg=getCellBg(pg), txt=getCellText(pg);
+                    if(bg&&d.img){ bg.style.backgroundImage=`url(${d.img})`; bg.style.backgroundPosition=getBgPos(d.imgOffsetX||0,d.imgOffsetY||0); }
+                    if(txt){ const rgb=d.overlayType==='black'?'0,0,0':'255,255,255';
+                        txt.style.background=`rgba(${rgb},${d.overlayOp/100})`;
+                        txt.style.alignItems=d.align==='left'?'flex-start':(d.align==='right'?'flex-end':'center');
+                        txt.style.justifyContent=d.justify;
+                        txt.innerHTML=`<div style="font-family:${d.font}; font-size:${coverFontSizeCss(d.fontSize)}; color:${d.color}; text-align:${d.align}; word-break:break-word;">${(d.text||'').replace(/\n/g,'<br>')}</div>`;
+                    }
+                } else if(d.type==='spread'){
+                    const pL=d.pages[0], pR=d.pages[1];
+                    if(d.merged && d.imgL){
+                        const geo = getSpreadGeometry(d);
+                        if (geo) {
+                            const off = d.mergedOffset||{x:0,y:0};
+                            const bg = getCellBg(geo.first);
+                            if (bg) { bg.style.backgroundImage = `url(${d.imgL})`; bg.style.backgroundPosition = getBgPos(off.x, off.y); }
+                        }
+                    } else if(!d.merged){
+                        if(d.imgL){ const bg=getCellBg(pL); if(bg){ bg.style.backgroundImage=`url(${d.imgL})`; const off=d.offsetL||{x:0,y:0}; bg.style.backgroundPosition=getBgPos(off.x,off.y); } }
+                        if(d.imgR){ const bg=getCellBg(pR); if(bg){ bg.style.backgroundImage=`url(${d.imgR})`; const off=d.offsetR||{x:0,y:0}; bg.style.backgroundPosition=getBgPos(off.x,off.y); } }
+                    }
+                }
+            });
+        }
+
+        // ---- DRAG HANDLERS (unified) ----
+        function initDrag() {
+            const preview = document.getElementById('preview');
+            if (!preview) return;
+            preview.addEventListener('mousedown', onDragStart);
+            window.addEventListener('mousemove', onDragMove);
+            window.addEventListener('mouseup', onDragEnd);
+        }
+
+        function onDragStart(e) {
+            const slot = e.target.closest('.page-slot');
+            if (!slot) return;
+            const d = viewsData[activeView];
+            if (!d) return;
+            let targetType = null;
+            if (d.type === 'cover') {
+                if (d.img) targetType = 'cover';
+            } else if (d.type === 'spread') {
+                if (d.merged) {
+                    if (d.imgL) targetType = 'merged';
+                } else {
+                    const slots = Array.from(document.querySelectorAll('#preview .page-slot'));
+                    const index = slots.indexOf(slot);
+                    if (index === 0 && d.imgL) targetType = 'left';
+                    else if (index === 1 && d.imgR) targetType = 'right';
+                }
+            }
+            if (!targetType) return;
+            dragActive = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            dragTarget = targetType;
+            if (targetType === 'cover') { startOffsetX = d.imgOffsetX||0; startOffsetY = d.imgOffsetY||0; }
+            else if (targetType === 'merged') { startOffsetX = d.mergedOffset?.x||0; startOffsetY = d.mergedOffset?.y||0; }
+            else if (targetType === 'left') { startOffsetX = d.offsetL?.x||0; startOffsetY = d.offsetL?.y||0; }
+            else if (targetType === 'right') { startOffsetX = d.offsetR?.x||0; startOffsetY = d.offsetR?.y||0; }
+            e.preventDefault();
+        }
+
+        function onDragMove(e) {
+            if (!dragActive) return;
+            const d = viewsData[activeView];
+            if (!d) return;
+            const deltaX = e.clientX - dragStartX;
+            const deltaY = e.clientY - dragStartY;
+            const sens = 0.4;
+            let newX = startOffsetX - deltaX * sens;
+            let newY = startOffsetY - deltaY * sens;
+            newX = Math.min(50, Math.max(-50, newX));
+            newY = Math.min(50, Math.max(-50, newY));
+            
+            if (dragTarget === 'cover') {
+                d.imgOffsetX = newX; d.imgOffsetY = newY;
+                const slot = document.querySelector('#preview .page-slot');
+                if (slot) slot.style.backgroundPosition = getBgPos(newX, newY);
+            } else if (dragTarget === 'merged') {
+                if (!d.mergedOffset) d.mergedOffset = {x:0,y:0};
+                d.mergedOffset.x = newX; d.mergedOffset.y = newY;
+                const slot = document.querySelector('#preview .page-slot');
+                if (slot) slot.style.backgroundPosition = getBgPos(newX, newY);
+            } else if (dragTarget === 'left') {
+                if (!d.offsetL) d.offsetL = {x:0,y:0};
+                d.offsetL.x = newX; d.offsetL.y = newY;
+                const leftSlot = document.querySelectorAll('#preview .page-slot')[0];
+                if (leftSlot) leftSlot.style.backgroundPosition = getBgPos(newX, newY);
+            } else if (dragTarget === 'right') {
+                if (!d.offsetR) d.offsetR = {x:0,y:0};
+                d.offsetR.x = newX; d.offsetR.y = newY;
+                const rightSlot = document.querySelectorAll('#preview .page-slot')[1];
+                if (rightSlot) rightSlot.style.backgroundPosition = getBgPos(newX, newY);
+            }
+        }
+
+        function onDragEnd() {
+            if (dragActive) {
+                // Refresh print overlays after drag ends
+                updatePrint();
+            }
+            dragActive = false;
+            dragTarget = null;
+        }
+
+        // ---- DROP IMAGE ONTO PREVIEW ----
+        function initPreviewDrop() {
+            const preview = document.getElementById('preview');
+            if (!preview) return;
+            preview.addEventListener('dragover', (e) => { e.preventDefault(); preview.classList.add('dragover'); });
+            preview.addEventListener('dragleave', () => { preview.classList.remove('dragover'); });
+            preview.addEventListener('drop', (e) => {
+                e.preventDefault();
+                preview.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length === 0) return;
+                const file = files[0];
+                if (!file.type.startsWith('image/')) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const data = viewsData[activeView];
+                    if (data.type === 'cover') {
+                        data.img = ev.target.result;
+                    } else if (data.type === 'spread') {
+                        if (data.merged) {
+                            data.imgL = ev.target.result;
+                        } else {
+                            const rect = preview.getBoundingClientRect();
+                            const mouseX = e.clientX - rect.left;
+                            const half = rect.width / 2;
+                            if (mouseX < half) data.imgL = ev.target.result;
+                            else data.imgR = ev.target.result;
+                        }
+                    }
+                    renderUI();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // ---- RENDER PREVIEW ----
+        function renderUI() {
+            const d = viewsData[activeView];
+            document.querySelectorAll('.nav-item').forEach((el,i)=>el.classList.toggle('active',i===activeView));
+            const prev = document.getElementById('preview');
+            prev.className = `preview-box ${d.type==='cover'?'portrait':'landscape'}`;
+            if (d.type === 'cover') {
+                const rgb = d.overlayType==='black'?'0,0,0':'255,255,255';
+                const fs = coverFontSizeCss(d.fontSize);
+                prev.innerHTML = `<div class="page-slot" style="background-image:url(${d.img||''}); background-size:cover; background-position:${getBgPos(d.imgOffsetX||0,d.imgOffsetY||0)};"><div class="text-overlay-container" id="previewOverlay" style="background:rgba(${rgb},${d.overlayOp/100}); align-items:${d.align==='left'?'flex-start':(d.align==='right'?'flex-end':'center')}; justify-content:${d.justify};"><div style="font-family:${d.font}; font-size:${fs}; color:${d.color}; text-align:${d.align}; word-break:break-word;">${(d.text||'').replace(/\n/g,'<br>')}</div></div></div><div class="drag-hint">🖱️ Drag to reposition · 📂 Drop image here</div>`;
+            } else if (d.merged) {
+                const off = d.mergedOffset||{x:0,y:0};
+                prev.innerHTML = `<div class="page-slot" style="background-image:url(${d.imgL||''}); background-size:cover; background-position:${getBgPos(off.x,off.y)};"></div><div class="drag-hint">🖱️ Drag spread · 📂 Drop image</div>`;
+            } else {
+                const offL = d.offsetL||{x:0,y:0}, offR = d.offsetR||{x:0,y:0};
+                prev.innerHTML = `<div class="page-slot spine-line" style="background-image:url(${d.imgL||''}); background-size:cover; background-position:${getBgPos(offL.x,offL.y)};"></div><div class="page-slot" style="background-image:url(${d.imgR||''}); background-size:cover; background-position:${getBgPos(offR.x,offR.y)};"></div><div class="drag-hint">🖱️ Drag left/right side · 📂 Drop image here</div>`;
+            }
+            buildToolbar(d);
+            updatePrint();
+        }
+
+        // ---- TOOLBAR HELPERS (unchanged) ----
+        function updateFontSizeLive(v){
+            const d=viewsData[activeView]; if(d.type!=='cover') return;
+            d.fontSize=parseFloat(v);
+            const fs = coverFontSizeCss(d.fontSize);
+            const pd=document.querySelector('#preview .text-overlay-container div'); if(pd) pd.style.fontSize=fs;
+            const pt=getCellText(d.pages[0]); if(pt){ const idiv=pt.querySelector('div'); if(idiv) idiv.style.fontSize=fs; }
+            const lbl=document.querySelector('.font-size-label'); if(lbl) lbl.textContent=`${d.fontSize}`;
+        }
+        function updateOverlayOpacity(v){
+            const d=viewsData[activeView]; if(d.type!=='cover') return;
+            d.overlayOp=parseInt(v); const po=document.getElementById('previewOverlay'); if(po){ const rgb=d.overlayType==='black'?'0,0,0':'255,255,255'; po.style.background=`rgba(${rgb},${d.overlayOp/100})`; }
+            const pt=getCellText(d.pages[0]); if(pt){ const rgb=d.overlayType==='black'?'0,0,0':'255,255,255'; pt.style.background=`rgba(${rgb},${d.overlayOp/100})`; }
+        }
+        function updateOverlayType(t){ const d=viewsData[activeView]; d.overlayType=t; d.color=t==='black'?'#ffffff':'#000000'; renderUI(); }
+        function setupDragDrop(){ document.querySelectorAll('.dropzone').forEach(dz=>{ dz.removeEventListener('dragover',dz._dh); dz.removeEventListener('dragleave',dz._dl); dz.removeEventListener('drop',dz._dp);
+            const dh=e=>{e.preventDefault(); dz.classList.add('dragover');}; const dl=()=>{dz.classList.remove('dragover');}; const dp=e=>{e.preventDefault(); dz.classList.remove('dragover'); const f=e.dataTransfer.files; if(f.length>0){ const key=dz.getAttribute('data-upload-key')||'imgL'; handleFileUpload(f[0],key); }};
+            dz._dh=dh; dz._dl=dl; dz._dp=dp; dz.addEventListener('dragover',dh); dz.addEventListener('dragleave',dl); dz.addEventListener('drop',dp); }); }
+        function handleFileUpload(file,key){ if(!file||!file.type.startsWith('image/')) return; const r=new FileReader(); r.onload=ev=>{ viewsData[activeView][key]=ev.target.result; renderUI(); }; r.readAsDataURL(file); }
+        function buildToolbar(d){
+            const tb=document.getElementById('toolbar'); if(!tb) return;
+            if(d.type==='cover'){
+                let opts=''; fontOptions.forEach(o=>{ const sel=(d.font===o.value)?'selected':''; opts+=`<option value="${o.value}" ${sel}>${o.name}</option>`; });
+                tb.innerHTML=`<div class="tool-panel"><strong>COVER IMAGE</strong><div class="dropzone" data-upload-key="img"><span class="dropzone-text">DRAG / CLICK</span><input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'img')"></div><div class="row"><select onchange="updateOverlayType(this.value)"><option value="black" ${d.overlayType==='black'?'selected':''}>Darken</option><option value="white" ${d.overlayType==='white'?'selected':''}>Whiten</option></select><input type="range" min="0" max="100" value="${d.overlayOp}" oninput="updateOverlayOpacity(this.value)"></div></div><div class="tool-panel"><strong>TEXT</strong><textarea id="temp-text-input" placeholder="Enter cover text...">${d.text||''}</textarea><button class="apply-btn" onclick="applyText()">APPLY</button></div><div class="tool-panel"><strong>FONT & SIZE</strong><select onchange="updateProp('font',this.value)">${opts}</select><div class="row"><span style="font-size:0.7rem;">Size</span><input type="range" min="2" max="15" step="0.5" value="${d.fontSize}" oninput="updateFontSizeLive(this.value)"><span class="font-size-label" style="font-size:0.7rem; width:45px;">${d.fontSize}</span></div><input type="color" value="${d.color}" onchange="updateProp('color',this.value)"></div><div class="tool-panel"><strong>ALIGNMENT</strong><div class="align-btn-group"><div class="align-btn ${d.align==='left'?'active':''}" onclick="setAlign('left')">← L</div><div class="align-btn ${d.align==='center'?'active':''}" onclick="setAlign('center')">↔ C</div><div class="align-btn ${d.align==='right'?'active':''}" onclick="setAlign('right')">R →</div></div><div class="align-btn-group"><div class="align-btn ${d.justify==='flex-start'?'active':''}" onclick="setJustify('flex-start')">↑ TOP</div><div class="align-btn ${d.justify==='center'?'active':''}" onclick="setJustify('center')">◉ MID</div><div class="align-btn ${d.justify==='flex-end'?'active':''}" onclick="setJustify('flex-end')">↓ BOT</div></div></div>`;
+            } else if(d.merged){
+                tb.innerHTML=`<div class="tool-panel"><strong>MERGE SPREAD</strong><label><input type="checkbox" onchange="toggleMerge(event)" checked> Single image across both pages</label></div><div class="tool-panel"><strong>SPREAD IMAGE</strong><div class="dropzone" data-upload-key="imgL"><span class="dropzone-text">DROP IMAGE</span><input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'imgL')"></div></div><div class="tool-panel"><em>Spread prints with correct rotation (fixed 14-15 & 8-9)</em></div>`;
+            } else {
+                tb.innerHTML=`<div class="tool-panel"><strong>MERGE SPREAD</strong><label><input type="checkbox" onchange="toggleMerge(event)"> Single image across both pages</label></div><div class="tool-panel"><strong>LEFT PAGE (Pg ${d.pages[0]})</strong><div class="dropzone" data-upload-key="imgL"><span class="dropzone-text">DROP IMAGE</span><input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'imgL')"></div></div><div class="tool-panel"><strong>RIGHT PAGE (Pg ${d.pages[1]})</strong><div class="dropzone" data-upload-key="imgR"><span class="dropzone-text">DROP IMAGE</span><input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'imgR')"></div></div>`;
+            }
+            setupDragDrop();
+        }
+        function updateProp(p,v){ viewsData[activeView][p]=v; renderUI(); }
+        function applyText(){ const inp=document.getElementById('temp-text-input'); if(inp) viewsData[activeView].text=inp.value; renderUI(); }
+        function setAlign(a){ viewsData[activeView].align=a; renderUI(); }
+        function setJustify(j){ viewsData[activeView].justify=j; renderUI(); }
+        function toggleMerge(e){ const d=viewsData[activeView]; d.merged=e.target.checked; if(d.merged){ d.imgR=null; if(!d.mergedOffset) d.mergedOffset={x:0,y:0}; } else { if(!d.offsetL) d.offsetL={x:0,y:0}; if(!d.offsetR) d.offsetR={x:0,y:0}; } renderUI(); }
+
+        function init(){
+            const nav=document.getElementById('nav-list'); nav.innerHTML='';
+            viewsData.forEach((v,i)=>{ const div=document.createElement('div'); div.className='nav-item'+(i===0?' active':''); div.textContent=v.label; div.onclick=()=>{activeView=i; renderUI();}; nav.appendChild(div); });
+            renderUI();
+            initDrag();
+            initPreviewDrop();
+        }
+        window.onload = init;
+    </script>
+</body>
+</html>
