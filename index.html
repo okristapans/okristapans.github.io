@@ -1,440 +1,934 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>ZINE STUDIO — TRUE MERGED SPREAD (NO DUPLICATION)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Permanent+Marker&family=Special+Elite&family=Press+Start+2P&family=Archivo+Black&family=Anton&family=Monoton&family=Righteous&family=Luckiest+Guy&family=Rubik+Bubbles&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        :root { --bg: #f7f7f5; --fg: #111; --font: 'Courier New', monospace; --border: 3px solid var(--fg); --accent: #ff3e00; }
-        body { font-family: var(--font); background: var(--bg); color: var(--fg); display: flex; height: 100vh; overflow: hidden; text-transform: uppercase; }
-        #sidebar { width: 260px; background: #fff; border-right: var(--border); display: flex; flex-direction: column; overflow-y: auto; z-index: 10; }
-        .branding { padding: 20px; border-bottom: var(--border); font-weight: bold; font-size: 1.2rem; background: var(--fg); color: #fff; letter-spacing: -1px; }
-        .nav-item { padding: 14px 20px; cursor: pointer; border-bottom: 1px solid #ddd; font-weight: bold; font-size: 0.85rem; transition: background 0.2s; }
-        .nav-item:hover { background: #f0f0f0; }
-        .nav-item.active { background: var(--fg); color: #fff; }
-        #main-view { flex: 1; display: flex; flex-direction: column; position: relative; min-height: 0; }
-        #canvas-area { flex: 1; background: #dbdbdb; display: flex; align-items: center; justify-content: center; padding: 30px; min-height: 0; }
-        .preview-box { background: #fff; border: 2px dashed #999; box-shadow: 0 15px 35px rgba(0,0,0,0.15); display: flex; position: relative; overflow: hidden; max-width: 100%; max-height: 100%; user-select: none; }
-        .preview-box.portrait { height: 90%; aspect-ratio: 1 / 1.414; }
-        .preview-box.landscape { height: 90%; aspect-ratio: 2 / 1.414; }
-        .page-slot { flex: 1; background-size: cover; background-repeat: no-repeat; background-color: #fff; position: relative; overflow: hidden; cursor: grab; }
-        .page-slot:active { cursor: grabbing; }
-        .spine-line { border-right: 2px dashed rgba(0,0,0,0.25); }
-        .drag-hint { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; font-size: 10px; padding: 4px 8px; border-radius: 4px; pointer-events: none; z-index: 10; font-family: monospace; text-transform: none; }
-        .text-overlay-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; padding: 10%; pointer-events: none; z-index: 5; overflow: auto; container-type: inline-size; }
-        .text-overlay-container div { word-break: break-word; overflow-wrap: break-word; max-width: 100%; line-height: 1.2; }
-        #toolbar { background: #fff; border-top: var(--border); padding: 15px 20px; display: flex; gap: 20px; overflow-x: auto; min-height: 240px; flex-shrink: 0; }
-        .tool-panel { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 8px; border-right: 2px dashed #e0e0e0; padding-right: 20px; }
-        .tool-panel:last-child { border-right: none; }
-        .tool-panel strong { border-bottom: 2px solid var(--fg); padding-bottom: 4px; font-size: 0.8rem; }
-        .dropzone { border: 2px dashed #aaa; background: #fafafa; padding: 10px; text-align: center; cursor: pointer; position: relative; transition: all 0.2s; flex: 1; display: flex; align-items: center; justify-content: center; }
-        .dropzone.dragover { background: #e0e0e0; border-color: var(--accent); }
-        .dropzone input { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
-        select, button { font-family: var(--font); padding: 6px; text-transform: uppercase; border: 1px solid var(--fg); background: #fff; cursor: pointer; }
-        button:hover { background: #f0f0f0; }
-        textarea { width: 100%; flex: 1; resize: none; padding: 6px; border: 1px solid var(--fg); font-family: sans-serif; font-size: 0.85rem; }
-        .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-        .apply-btn { background: var(--fg); color: #fff; font-weight: bold; padding: 8px; border: none; }
-        .align-btn-group { display: flex; gap: 4px; background: #f0f0f0; padding: 4px; border-radius: 4px; }
-        .align-btn { flex: 1; padding: 6px; font-weight: bold; background: white; border: 1px solid #ccc; cursor: pointer; text-align: center; }
-        .align-btn.active { background: var(--fg); color: white; border-color: var(--fg); }
-        #print-btn { position: absolute; top: 20px; right: 20px; background: var(--accent); color: white; border: var(--border); padding: 12px 24px; font-weight: bold; cursor: pointer; box-shadow: 4px 4px 0 var(--fg); z-index: 100; transition: transform 0.1s; }
-        #print-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--fg); }
-        .print-window { display: none; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ZINE STUDIO</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Permanent+Marker&family=Special+Elite&family=Press+Start+2P&family=Archivo+Black&family=Anton&family=Monoton&family=Righteous&family=Luckiest+Guy&family=Rubik+Bubbles&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#f5f4f0;--fg:#111;--font:'Courier New',monospace;
+  --border:2px solid var(--fg);--accent:#ff3e00;--accent2:#ffe600;
+  --sidebar-w:240px;--toolbar-h:220px;--mobile-nav-h:56px;
+  --radius:4px;--shadow:0 4px 24px rgba(0,0,0,.12);
+}
+html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--bg);color:var(--fg);text-transform:uppercase}
 
-        /* ---------- MOBILE RESPONSIVE MEDIA QUERY ---------- */
-        @media (max-width: 768px) {
-            body { flex-direction: column; height: 100vh; overflow: hidden; }
-            
-            /* Sidebar turns into a horizontal swipe menu like Dirty Little Zine */
-            #sidebar { width: 100%; height: auto; min-height: 55px; border-right: none; border-bottom: var(--border); flex-direction: row; overflow-x: auto; overflow-y: hidden; white-space: nowrap; flex-shrink: 0; -webkit-overflow-scrolling: touch; }
-            .branding { padding: 12px 15px; font-size: 0.8rem; border-bottom: none; border-right: var(--border); display: flex; align-items: center; justify-content: center; }
-            #nav-list { display: flex; flex-direction: row; }
-            .nav-item { padding: 12px 18px; border-bottom: none; border-right: 1px solid #ddd; font-size: 0.75rem; white-space: nowrap; display: flex; align-items: center; }
-            
-            /* Flexible viewport area rearranging tools layout */
-            #main-view { flex: 1; display: flex; flex-direction: column; overflow-y: auto; min-height: 0; }
-            
-            /* Control stacking order via Flex properties */
-            #canvas-area { order: 1; padding: 15px; flex-shrink: 0; height: 40vh; min-height: 250px; }
-            #toolbar { order: 2; flex-direction: column; min-height: auto; flex-shrink: 0; padding: 15px; gap: 20px; border-top: var(--border); }
-            #print-btn { order: 3; position: relative; top: auto; right: auto; margin: 10px 15px 25px 15px; width: calc(100% - 30px); text-align: center; box-shadow: 4px 4px 0 var(--fg); transform: none; }
-            
-            .preview-box { max-height: 100%; max-width: 100%; }
-            .preview-box.portrait { height: 100%; width: auto; }
-            .preview-box.landscape { width: 100%; height: auto; max-height: 100%; }
-            
-            .tool-panel { border-right: none; border-bottom: 2px dashed #e0e0e0; padding-right: 0; padding-bottom: 20px; width: 100%; }
-            .tool-panel:last-child { border-bottom: none; padding-bottom: 0; }
-            .dropzone { min-height: 90px; }
-            
-            /* Prevent form-zoom trigger constraints on mobile safari / android */
-            select, button, textarea, input, .align-btn, .apply-btn { font-size: 16px !important; min-height: 44px; }
-            .row { gap: 12px; }
-        }
+/* ── LAYOUT ── */
+#app{display:flex;height:100%;overflow:hidden}
+#sidebar{width:var(--sidebar-w);background:#fff;border-right:var(--border);display:flex;flex-direction:column;overflow:hidden;z-index:20;flex-shrink:0}
+#main-view{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+#canvas-area{flex:1;display:flex;align-items:center;justify-content:center;background:#ddd;position:relative;min-height:0;overflow:hidden}
+#toolbar{background:#fff;border-top:var(--border);height:var(--toolbar-h);display:flex;gap:0;overflow-x:auto;flex-shrink:0}
 
-        @media print {
-            @page { size: portrait; margin: 0; }
-            body { margin: 0; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            #sidebar, #main-view, #print-btn { display: none !important; }
-            .print-window { display: block !important; width: 100vw; height: 100vh; }
-            .sheet-page { display: grid; grid-template-columns: repeat(4, 25vw); grid-template-rows: repeat(4, 25vh); width: 100vw; height: 100vh; page-break-after: always; position: relative; }
-            .cell { width: 100%; height: 100%; position: relative; background-color: #fff; overflow: hidden; }
-            .cell-bg { position: absolute; width: 100%; height: 100%; top: 0; left: 0; background-size: cover; background-repeat: no-repeat; background-position: center; z-index: 1; }
-            .p-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 10%; display: flex; flex-direction: column; z-index: 2; word-break: break-word; overflow-wrap: break-word; container-type: inline-size; }
-            .p-text div { line-height: 1.2; }
-            .rot180 { transform: rotate(180deg); }
-        }
-    </style>
+/* ── SIDEBAR ── */
+.branding{padding:14px 16px;background:var(--fg);color:#fff;font-size:1.1rem;font-weight:bold;letter-spacing:-1px;flex-shrink:0}
+#nav-list{flex:1;overflow-y:auto}
+.nav-item{padding:8px 12px;cursor:pointer;border-bottom:1px solid #eee;transition:background .15s}
+.nav-item:hover{background:#f5f5f5}
+.nav-item.active{background:var(--fg);color:#fff}
+.nav-label{font-weight:bold;font-size:.75rem;margin-bottom:5px}
+.nav-thumb{width:100%;background:#e8e8e8;border:1px solid rgba(0,0,0,.1);border-radius:2px;overflow:hidden;display:flex}
+.nav-thumb.portrait{aspect-ratio:3/4}
+.nav-thumb.landscape{aspect-ratio:3/2}
+.nav-thumb-slot{flex:1;background-size:cover;background-repeat:no-repeat;position:relative}
+.nav-thumb-slot+.nav-thumb-slot{border-left:1px dashed rgba(0,0,0,.15)}
+.nav-thumb-text{position:absolute;inset:0;display:flex;flex-direction:column;padding:8%;overflow:hidden;container-type:inline-size}
+.nav-thumb-text div{line-height:1.1;word-break:break-word}
+.nav-item.active .nav-thumb{border-color:rgba(255,255,255,.3)}
+.nav-thumb-slot.rot180{transform:none}
+#sidebar-footer{padding:10px 12px;border-top:var(--border);display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.sidebar-btn{width:100%;padding:9px 10px;font-family:var(--font);font-size:.75rem;font-weight:bold;text-transform:uppercase;cursor:pointer;border:var(--border);background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s}
+.sidebar-btn:hover{background:var(--fg);color:#fff}
+.sidebar-btn.print-btn{background:var(--accent);color:#fff;border-color:var(--fg)}
+.sidebar-btn.print-btn:hover{background:#cc2f00}
+.sidebar-btn.tutorial-btn{background:var(--accent2);color:var(--fg)}
+.sidebar-btn.tutorial-btn:hover{background:var(--fg);color:#fff}
+
+/* ── PREVIEW ── */
+.preview-box{background:#fff;border:2px dashed #999;box-shadow:var(--shadow);display:flex;position:relative;overflow:hidden;max-width:100%;max-height:100%;user-select:none;touch-action:none}
+.preview-box.portrait{height:min(90%,90vw);aspect-ratio:1/1.414}
+.preview-box.landscape{height:min(80%,90vw);aspect-ratio:2/1.414}
+.page-slot{flex:1;background-size:cover;background-repeat:no-repeat;background-color:#fff;position:relative;overflow:hidden;cursor:grab}
+.page-slot:active{cursor:grabbing}
+.spine-line{border-right:2px dashed rgba(0,0,0,.2)}
+.drag-hint{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;padding:3px 7px;border-radius:3px;pointer-events:none;z-index:10;font-family:monospace;text-transform:none}
+.text-overlay-container{position:absolute;inset:0;display:flex;flex-direction:column;padding:10%;pointer-events:none;z-index:5;overflow:hidden;container-type:inline-size}
+.text-overlay-container div{word-break:break-word;overflow-wrap:break-word;line-height:1.2}
+
+/* tap-to-upload overlay when no image */
+.tap-upload{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;z-index:6;background:rgba(255,255,255,.05)}
+.tap-upload input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.tap-upload-icon{font-size:2rem;opacity:.4}
+.tap-upload-label{font-size:.65rem;opacity:.45;text-align:center;line-height:1.3;max-width:80%}
+.page-slot.has-image .tap-upload{display:none}
+
+/* ── TOOLBAR ── */
+.tool-panel{flex:1;min-width:200px;display:flex;flex-direction:column;gap:7px;padding:14px 16px;border-right:1px dashed #e0e0e0}
+.tool-panel:last-child{border-right:none}
+.tool-panel strong{font-size:.7rem;border-bottom:2px solid var(--fg);padding-bottom:3px;display:block}
+.dropzone{border:2px dashed #bbb;background:#fafafa;padding:8px;text-align:center;cursor:pointer;position:relative;transition:all .2s;flex:1;display:flex;align-items:center;justify-content:center;min-height:60px;border-radius:var(--radius)}
+.dropzone.dragover{background:#e8f0ff;border-color:var(--accent)}
+.dropzone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.dropzone-text{font-size:.7rem;pointer-events:none}
+select,button{font-family:var(--font);padding:5px 8px;text-transform:uppercase;border:var(--border);background:#fff;cursor:pointer;border-radius:var(--radius);font-size:.75rem}
+button:hover{background:#f0f0f0}
+textarea{width:100%;flex:1;resize:none;padding:6px;border:var(--border);font-family:sans-serif;font-size:.82rem;border-radius:var(--radius);min-height:48px}
+input[type=text]{width:100%;padding:5px 8px;border:var(--border);font-family:var(--font);font-size:.75rem;border-radius:var(--radius)}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.apply-btn{background:var(--fg);color:#fff;font-weight:bold;padding:7px;border:none;width:100%}
+.align-btn-group{display:flex;gap:3px}
+.align-btn{flex:1;padding:5px 3px;font-weight:bold;background:#fff;border:1px solid #ccc;cursor:pointer;text-align:center;font-size:.7rem;border-radius:var(--radius)}
+.align-btn.active{background:var(--fg);color:#fff;border-color:var(--fg)}
+.font-size-label{font-size:.7rem;min-width:28px;text-align:right}
+
+/* ── MOBILE ACTION BAR (tutorial + print) ── */
+#mobile-action-bar{display:none;background:#fff;border-top:var(--border);flex-shrink:0;padding:8px 12px;gap:8px;z-index:25}
+#mobile-action-bar .sidebar-btn{flex:1;min-height:44px;font-size:13px!important}
+
+/* ── MOBILE BOTTOM NAV ── */
+#mobile-nav{display:none;height:var(--mobile-nav-h);background:var(--fg);border-top:var(--border);flex-shrink:0;overflow-x:auto;overflow-y:hidden}
+#mobile-nav-inner{display:flex;height:100%;width:max-content;min-width:100%}
+.mobile-nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 10px;cursor:pointer;border-right:1px solid rgba(255,255,255,.1);min-width:70px;gap:3px;color:rgba(255,255,255,.55);transition:all .15s}
+.mobile-nav-item.active{color:#fff;background:rgba(255,255,255,.12)}
+.mobile-nav-item .mn-label{font-size:7px;text-align:center;line-height:1.1}
+.mobile-nav-thumb{width:40px;border:1px solid rgba(255,255,255,.2);border-radius:2px;overflow:hidden;background:#333;display:flex}
+.mobile-nav-thumb.portrait{height:36px}
+.mobile-nav-thumb.landscape{height:20px}
+.mn-slot{flex:1;background-size:cover;background-position:center}
+.mn-slot+.mn-slot{border-left:1px solid rgba(255,255,255,.15)}
+
+/* ── MOBILE TOOLBAR SHEET ── */
+#toolbar-toggle{display:none;position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:var(--fg);color:#fff;border:none;padding:10px 24px;font-family:var(--font);font-size:.75rem;font-weight:bold;text-transform:uppercase;cursor:pointer;border-radius:24px;box-shadow:0 4px 16px rgba(0,0,0,.3);z-index:30}
+#mobile-sheet{display:none;position:fixed;inset:0;z-index:50;pointer-events:none}
+#mobile-sheet-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.5);opacity:0;transition:opacity .3s;pointer-events:none}
+#mobile-sheet-panel{position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:var(--border);border-radius:12px 12px 0 0;transform:translateY(100%);transition:transform .35s cubic-bezier(.32,.72,0,1);pointer-events:all;max-height:80vh;display:flex;flex-direction:column}
+#mobile-sheet.open{pointer-events:all}
+#mobile-sheet.open #mobile-sheet-backdrop{opacity:1;pointer-events:all}
+#mobile-sheet.open #mobile-sheet-panel{transform:translateY(0)}
+.sheet-handle{width:40px;height:4px;background:#ccc;border-radius:2px;margin:10px auto 6px}
+.sheet-title{text-align:center;font-size:.8rem;font-weight:bold;padding:0 16px 10px;border-bottom:1px dashed #e0e0e0}
+#mobile-sheet-content{overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:14px;flex:1}
+.sheet-section{display:flex;flex-direction:column;gap:8px}
+.sheet-section strong{font-size:.7rem;border-bottom:2px solid var(--fg);padding-bottom:3px;display:block}
+.mobile-dropzone{border:2px dashed #bbb;background:#fafafa;padding:20px;text-align:center;cursor:pointer;position:relative;border-radius:var(--radius);font-size:.75rem;display:flex;align-items:center;justify-content:center;gap:8px}
+.mobile-dropzone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+
+/* ── TUTORIAL MODAL ── */
+#tutorial-modal{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);align-items:center;justify-content:center;padding:16px}
+#tutorial-modal.open{display:flex}
+#tutorial-box{background:#fff;border:var(--border);max-width:720px;width:100%;max-height:90vh;display:flex;flex-direction:column;border-radius:4px;overflow:hidden;box-shadow:8px 8px 0 rgba(0,0,0,.15)}
+#tutorial-header{background:var(--fg);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#tutorial-header h2{font-size:1rem;letter-spacing:1px}
+#tutorial-close{background:none;border:2px solid rgba(255,255,255,.5);color:#fff;padding:4px 12px;cursor:pointer;font-family:var(--font);font-size:.75rem}
+#tutorial-close:hover{background:rgba(255,255,255,.15)}
+#tutorial-body{overflow-y:auto;padding:20px;flex:1}
+.tut-video{background:#111;padding:10px 16px;display:flex;align-items:center;gap:10px;border-bottom:var(--border);font-size:.75rem;flex-shrink:0;color:#fff}
+.tut-video a{color:var(--accent2);text-decoration:none}
+.tut-video a:hover{text-decoration:underline}
+.steps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:4px}
+.step-card{border:2px solid var(--fg);border-radius:4px;overflow:hidden}
+.step-svg{display:block;width:100%;background:#f9f9f7}
+.step-desc{padding:8px 10px;background:#fff}
+.step-num{font-size:.6rem;color:var(--accent);font-weight:bold;display:block;margin-bottom:2px}
+.step-text{font-size:.72rem;line-height:1.4;text-transform:none;color:#333}
+.tut-note{margin-top:16px;padding:10px 14px;background:var(--accent2);border:2px solid var(--fg);font-size:.73rem;text-transform:none;line-height:1.5}
+
+/* ── PRINT ── */
+.print-window{display:none}
+@media print{
+  @page{size:portrait;margin:0}
+  body{margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #app,#tutorial-modal,#mobile-sheet{display:none!important}
+  .print-window{display:block!important;width:100vw;height:100vh}
+  .sheet-page{display:grid;grid-template-columns:repeat(4,25vw);grid-template-rows:repeat(4,25vh);width:100vw;height:100vh;page-break-after:always}
+  .cell{width:100%;height:100%;position:relative;background:#fff;overflow:hidden}
+  .cell-img-wrap{position:absolute;inset:0;overflow:hidden;z-index:1}
+  .cell-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+  .p-text{position:absolute;inset:0;padding:10%;display:flex;flex-direction:column;z-index:2;word-break:break-word;overflow-wrap:break-word;container-type:inline-size}
+  .p-text div{line-height:1.2}
+  .rot180{transform:rotate(180deg)}
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  body{flex-direction:column;height:100vh;overflow:hidden}
+  #app{flex-direction:column;height:100%}
+
+  /* Sidebar → horizontal swipe strip at top */
+  #sidebar{
+    width:100%;height:auto;min-height:55px;border-right:none;border-bottom:var(--border);
+    flex-direction:row;overflow-x:auto;overflow-y:hidden;white-space:nowrap;
+    flex-shrink:0;-webkit-overflow-scrolling:touch
+  }
+  .branding{padding:10px 14px;font-size:.8rem;border-bottom:none;border-right:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  #nav-list{display:flex;flex-direction:row;flex:1;overflow-x:auto;overflow-y:hidden}
+  .nav-item{padding:8px 12px;border-bottom:none;border-right:1px solid #ddd;font-size:.7rem;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:70px;flex-shrink:0}
+  .nav-thumb{width:52px}
+  .nav-thumb.portrait{aspect-ratio:3/4}
+  .nav-thumb.landscape{aspect-ratio:3/2}
+  #sidebar-footer{display:none}
+  #mobile-action-bar{display:flex;flex-direction:row}
+
+  /* Main view stacks vertically */
+  #main-view{flex:1;display:flex;flex-direction:column;overflow-y:auto;min-height:0}
+  #canvas-area{order:1;padding:12px;flex-shrink:0;min-height:200px;height:38vh}
+  #toolbar{order:2;flex-direction:column;min-height:auto;height:auto;flex-shrink:0;padding:0;gap:0;border-top:var(--border);overflow-x:visible;overflow-y:visible}
+  .tool-panel{border-right:none;border-bottom:1px dashed #e0e0e0;padding:12px 14px;min-width:0;width:100%}
+  .tool-panel:last-child{border-bottom:none}
+  .dropzone{min-height:80px}
+  /* Hide drag/click upload box on mobile — use tap-on-preview instead */
+  #toolbar .dropzone{display:none}
+
+  /* Preview sizing */
+  .preview-box{max-height:100%;max-width:100%}
+  .preview-box.portrait{height:100%;width:auto}
+  .preview-box.landscape{width:100%;height:auto;max-height:100%}
+
+  /* Prevent zoom on tap — 16px minimum */
+  select,button,textarea,input,input[type=text],.align-btn,.apply-btn{font-size:16px!important;min-height:44px}
+  .row{gap:10px}
+
+  /* Hide the floating mobile-only sheet UI — we use the inline toolbar instead */
+  #mobile-nav,#toolbar-toggle,#mobile-sheet{display:none!important}
+}
+@media(min-width:769px){
+  #mobile-nav,#toolbar-toggle,#mobile-sheet{display:none!important}
+}
+</style>
 </head>
 <body>
-    <div id="sidebar"><div class="branding">ZINE LAYOUT ENGINE</div><div id="nav-list"></div></div>
-    <div id="main-view"><button id="print-btn" onclick="window.print()">PRINT BOOKLET</button><div id="canvas-area"><div id="preview" class="preview-box portrait"></div></div><div id="toolbar"></div></div>
-    <div class="print-window"><div class="sheet-page" id="sheet-1"></div><div class="sheet-page" id="sheet-2"></div></div>
+<div id="app">
+  <!-- SIDEBAR (desktop) -->
+  <div id="sidebar">
+    <div class="branding">ZINE STUDIO</div>
+    <div id="nav-list"></div>
+    <div id="sidebar-footer">
+      <button class="sidebar-btn tutorial-btn" onclick="openTutorial()">📖 HOW TO FOLD &amp; CUT</button>
+      <button class="sidebar-btn print-btn" onclick="window.print()">🖨 PRINT BOOKLET</button>
+    </div>
+  </div>
 
-    <script>
-        // ---------- DATA ----------
-        const viewsData = [
-            { id: 0, label: "FRONT COVER (1)", type: "cover", pages: [1], img: null, imgOffsetX: 0, imgOffsetY: 0, text: "ZINE TITLE", font: "'Special Elite', cursive", fontSize: 5, align: "center", justify: "center", overlayType: "black", overlayOp: 0, color: "#000000" },
-            { id: 1, label: "PAGES 2-3", type: "spread", pages: [2, 3], merged: false, imgL: null, imgR: null, offsetL: {x:0,y:0}, offsetR: {x:0,y:0}, mergedOffset: {x:0,y:0} },
-            { id: 2, label: "PAGES 4-5", type: "spread", pages: [4, 5], merged: false, imgL: null, imgR: null, offsetL: {x:0,y:0}, offsetR: {x:0,y:0}, mergedOffset: {x:0,y:0} },
-            { id: 3, label: "PAGES 6-7", type: "spread", pages: [6, 7], merged: false, imgL: null, imgR: null, offsetL: {x:0,y:0}, offsetR: {x:0,y:0}, mergedOffset: {x:0,y:0} },
-            { id: 4, label: "PAGES 8-9", type: "spread", pages: [8, 9], merged: false, imgL: null, imgR: null, offsetL: {x:0,y:0}, offsetR: {x:0,y:0}, mergedOffset: {x:0,y:0} },
-            { id: 5, label: "PAGES 10-11", type: "spread", pages: [10, 11], merged: false, imgL: null, imgR: null, offsetL: {x:0,y:0}, offsetR: {x:0,y:0}, mergedOffset: {x:0,y:0} },
-            { id: 6, label: "PAGES 12-13", type: "spread", pages: [12, 13], merged: false, imgL: null, imgR: null, offsetL: {x:0,y:0}, offsetR: {x:0,y:0}, mergedOffset: {x:0,y:0} },
-            { id: 7, label: "PAGES 14-15", type: "spread", pages: [14, 15], merged: false, imgL: null, imgR: null, offsetL: {x:0,y:0}, offsetR: {x:0,y:0}, mergedOffset: {x:0,y:0} },
-            { id: 8, label: "BACK COVER (16)", type: "cover", pages: [16], img: null, imgOffsetX: 0, imgOffsetY: 0, text: "THE END", font: "'Courier New', monospace", fontSize: 4, align: "center", justify: "center", overlayType: "black", overlayOp: 0, color: "#000000" }
-        ];
-        const sheet1Template = [0,0,0,0, 15,14,9,8, 16,1,6,7, 0,0,0,0];
-        const sheet2Template = [0,11,12,0, 0,10,13,0, 0,5,2,0, 0,4,3,0];
-        const invertedPages = [3,4,8,9,10,13,14,15];
-        let activeView = 0;
-        let dragActive = false, dragStartX = 0, dragStartY = 0, startOffsetX = 0, startOffsetY = 0;
-        let dragTarget = null;
+  <!-- MAIN -->
+  <div id="main-view">
+    <div id="canvas-area">
+      <div id="preview" class="preview-box portrait"></div>
+      <button id="toolbar-toggle" onclick="openSheet()">✏️ EDIT PAGE</button>
+    </div>
+    <div id="toolbar"></div>
+  </div>
 
-        // ---------- SPREAD GEOMETRY ----------
-        function findPos(tpl, page) {
-            const idx = tpl.indexOf(page);
-            if (idx === -1) return null;
-            return { row: Math.floor(idx / 4), col: idx % 4, idx };
-        }
-        function getSpreadGeometry(d) {
-            if (d.type !== 'spread') return null;
-            const [pL, pR] = d.pages;
-            let tpl = sheet1Template.includes(pL) ? sheet1Template : sheet2Template;
-            const sheetId = tpl === sheet1Template ? 'sheet-1' : 'sheet-2';
-            const posL = findPos(tpl, pL), posR = findPos(tpl, pR);
-            if (!posL || !posR) return null;
-            const horizontal = posL.row === posR.row;
-            const first = posL.idx < posR.idx ? pL : pR;
-            const second = first === pL ? pR : pL;
-            const bothInverted = invertedPages.includes(pL) && invertedPages.includes(pR);
-            return { sheetId, horizontal, first, second, bothInverted, tpl };
-        }
+  <!-- MOBILE BOTTOM NAV -->
+  <div id="mobile-nav"><div id="mobile-nav-inner"></div></div>
 
-        const fontOptions = [
-            { name: "Typewriter", value: "'Special Elite', cursive" }, { name: "Marker", value: "'Permanent Marker', cursive" },
-            { name: "Bold Sans", value: "'Bebas Neue', sans-serif" }, { name: "Courier Clean", value: "'Courier New', monospace" },
-            { name: "Arcade", value: "'Press Start 2P', cursive" }, { name: "Archivo Black", value: "'Archivo Black', sans-serif" },
-            { name: "Anton", value: "'Anton', sans-serif" }, { name: "Monoton", value: "'Monoton', cursive" },
-            { name: "Righteous", value: "'Righteous', cursive" }, { name: "Luckiest Guy", value: "'Luckiest Guy', cursive" },
-            { name: "Rubik Bubbles", value: "'Rubik Bubbles', cursive" }, { name: "Georgia Serif", value: "Georgia, serif" }
-        ];
+  <!-- MOBILE ACTION BAR (tutorial + print) — shown at bottom on mobile only -->
+  <div id="mobile-action-bar">
+    <button class="sidebar-btn tutorial-btn" onclick="openTutorial()">📖 HOW TO FOLD &amp; CUT</button>
+    <button class="sidebar-btn print-btn" onclick="window.print()">🖨 PRINT BOOKLET</button>
+  </div>
+</div>
 
-        function getCellBg(p) { return document.getElementById(`print-bg-${p}`); }
-        function getCellText(p) { return document.getElementById(`print-text-${p}`); }
-        function getBgPos(x,y) { return `calc(50% + ${x}%) calc(50% + ${y}%)`; }
-        function coverFontSizeCss(fontSize) { return `${fontSize}cqw`; }
+<!-- MOBILE SHEET -->
+<div id="mobile-sheet">
+  <div id="mobile-sheet-backdrop" onclick="closeSheet()"></div>
+  <div id="mobile-sheet-panel">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="sheet-title">EDIT PAGE</div>
+    <div id="mobile-sheet-content"></div>
+  </div>
+</div>
 
-        function buildPrintGrid(id, tpl) {
-            const c = document.getElementById(id); if (!c) return;
-            c.innerHTML = '';
+<!-- TUTORIAL MODAL -->
+<div id="tutorial-modal">
+  <div id="tutorial-box">
+    <div id="tutorial-header">
+      <h2>HOW TO FOLD &amp; CUT YOUR ZINE</h2>
+      <button id="tutorial-close" onclick="closeTutorial()">✕ CLOSE</button>
+    </div>
+    <div class="tut-video">
+      <span>📺</span>
+      <span>Video guide: <a href="https://www.youtube.com/watch?v=wX0I9YCVq9E" target="_blank" rel="noopener">How to make a 16-page zine from one sheet →</a></span>
+    </div>
+    <div id="tutorial-body">
+      <div class="steps-grid" id="steps-grid"></div>
+      <div class="tut-note">💡 <strong>Tips:</strong> Crease every fold sharply with a bone folder or your thumbnail. Use a craft knife + metal ruler for clean cuts. Print double-sided on one A4 or Letter sheet — that single sheet becomes your entire 16-page zine.</div>
+    </div>
+  </div>
+</div>
 
-            const mergedFirst = {}, mergedSecond = {}, mergedGeom = {};
-            viewsData.forEach(d => {
-                if (d.type !== 'spread' || !d.merged || !d.imgL) return;
-                const geo = getSpreadGeometry(d);
-                if (!geo) return;
-                mergedFirst[geo.first] = d;
-                mergedSecond[geo.second] = d;
-                mergedGeom[geo.first] = geo;
-            });
+<!-- PRINT SHEETS -->
+<div class="print-window">
+  <div class="sheet-page" id="sheet-1"></div>
+  <div class="sheet-page" id="sheet-2"></div>
+</div>
 
-            tpl.forEach((p, idx) => {
-                const row = Math.floor(idx / 4) + 1;
-                const col = (idx % 4) + 1;
-                if (p === 0) {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    cell.style.gridColumnStart = col;
-                    cell.style.gridRowStart = row;
-                    c.appendChild(cell);
-                    return;
-                }
-                if (mergedSecond[p]) return;
+<script>
+// ─── DATA ───
+const viewsData=[
+  {id:0,label:"FRONT COVER",type:"cover",pages:[1],img:null,imgOffsetX:0,imgOffsetY:0,text:"ZINE TITLE",subtitle:"",author:"",font:"'Special Elite',cursive",fontSize:5,align:"center",justify:"center",overlayType:"black",overlayOp:0,color:"#000000"},
+  {id:1,label:"PAGES 2-3",type:"spread",pages:[2,3],merged:false,imgL:null,imgR:null,offsetL:{x:0,y:0},offsetR:{x:0,y:0},mergedOffset:{x:0,y:0}},
+  {id:2,label:"PAGES 4-5",type:"spread",pages:[4,5],merged:false,imgL:null,imgR:null,offsetL:{x:0,y:0},offsetR:{x:0,y:0},mergedOffset:{x:0,y:0}},
+  {id:3,label:"PAGES 6-7",type:"spread",pages:[6,7],merged:false,imgL:null,imgR:null,offsetL:{x:0,y:0},offsetR:{x:0,y:0},mergedOffset:{x:0,y:0}},
+  {id:4,label:"PAGES 8-9",type:"spread",pages:[8,9],merged:false,imgL:null,imgR:null,offsetL:{x:0,y:0},offsetR:{x:0,y:0},mergedOffset:{x:0,y:0}},
+  {id:5,label:"PAGES 10-11",type:"spread",pages:[10,11],merged:false,imgL:null,imgR:null,offsetL:{x:0,y:0},offsetR:{x:0,y:0},mergedOffset:{x:0,y:0}},
+  {id:6,label:"PAGES 12-13",type:"spread",pages:[12,13],merged:false,imgL:null,imgR:null,offsetL:{x:0,y:0},offsetR:{x:0,y:0},mergedOffset:{x:0,y:0}},
+  {id:7,label:"PAGES 14-15",type:"spread",pages:[14,15],merged:false,imgL:null,imgR:null,offsetL:{x:0,y:0},offsetR:{x:0,y:0},mergedOffset:{x:0,y:0}},
+  {id:8,label:"BACK COVER",type:"cover",pages:[16],img:null,imgOffsetX:0,imgOffsetY:0,text:"THE END",subtitle:"",author:"",font:"'Courier New',monospace",fontSize:4,align:"center",justify:"center",overlayType:"black",overlayOp:0,color:"#000000"}
+];
+const sheet1Template=[0,0,0,0,15,14,9,8,16,1,6,7,0,0,0,0];
+const sheet2Template=[0,11,12,0,0,10,13,0,0,5,2,0,0,4,3,0];
+const invertedPages=[3,4,8,9,10,13,14,15];
+const fontOptions=[
+  {name:"Special Elite",value:"'Special Elite',cursive"},
+  {name:"Courier New",value:"'Courier New',monospace"},
+  {name:"Bebas Neue",value:"'Bebas Neue',cursive"},
+  {name:"Permanent Marker",value:"'Permanent Marker',cursive"},
+  {name:"Press Start 2P",value:"'Press Start 2P',cursive"},
+  {name:"Archivo Black",value:"'Archivo Black',sans-serif"},
+  {name:"Anton",value:"'Anton',sans-serif"},
+  {name:"Righteous",value:"'Righteous',cursive"},
+  {name:"Luckiest Guy",value:"'Luckiest Guy',cursive"},
+  {name:"Rubik Bubbles",value:"'Rubik Bubbles',cursive"},
+];
+let activeView=0;
+let dragActive=false,dragStartX=0,dragStartY=0,startOffsetX=0,startOffsetY=0,dragTarget=null;
 
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.id = `print-cell-${p}`;
-                cell.style.gridColumnStart = col;
-                cell.style.gridRowStart = row;
+// ─── SPREAD GEOMETRY ───
+function findPos(tpl,page){const idx=tpl.indexOf(page);if(idx===-1)return null;return{row:Math.floor(idx/4),col:idx%4,idx};}
+function getSpreadGeometry(d){
+  if(d.type!=='spread')return null;
+  const[pL,pR]=d.pages;
+  let tpl=sheet1Template.includes(pL)?sheet1Template:sheet2Template;
+  const sheetId=tpl===sheet1Template?'sheet-1':'sheet-2';
+  const posL=findPos(tpl,pL),posR=findPos(tpl,pR);
+  if(!posL||!posR)return null;
+  const horizontal=posL.row===posR.row;
+  const first=posL.idx<posR.idx?pL:pR;
+  const second=first===pL?pR:pL;
+  const bothInverted=invertedPages.includes(pL)&&invertedPages.includes(pR);
+  return{sheetId,horizontal,first,second,bothInverted,tpl};
+}
 
-                if (mergedFirst[p]) {
-                    const geo = mergedGeom[p];
-                    if (geo.horizontal) cell.style.gridColumnEnd = 'span 2';
-                    else cell.style.gridRowEnd = 'span 2';
-                    if (geo.bothInverted) cell.classList.add('rot180');
-                } else if (invertedPages.includes(p)) {
-                    cell.classList.add('rot180');
-                }
+// ─── HELPERS ───
+function getBgPos(x,y){return`calc(50% + ${x}%) calc(50% + ${y}%)`;}
+function coverFontSizeCss(fs){return`${fs}cqw`;}
+function escHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function buildCoverTextHTML(d){
+  const ts=d.fontSize,ss=Math.max(d.fontSize*.5,1.5),as=Math.max(d.fontSize*.35,1.2);
+  let h=`<div style="font-family:${d.font};font-size:${coverFontSizeCss(ts)};color:${d.color};text-align:${d.align};word-break:break-word;">${escHtml(d.text||'').replace(/\n/g,'<br>')}</div>`;
+  if(d.subtitle)h+=`<div style="font-family:${d.font};font-size:${coverFontSizeCss(ss)};color:${d.color};text-align:${d.align};word-break:break-word;opacity:.85;margin-top:.4em;">${escHtml(d.subtitle).replace(/\n/g,'<br>')}</div>`;
+  if(d.author)h+=`<div style="font-family:${d.font};font-size:${coverFontSizeCss(as)};color:${d.color};text-align:${d.align};word-break:break-word;opacity:.75;margin-top:auto;padding-top:.6em;">${escHtml(d.author).replace(/\n/g,'<br>')}</div>`;
+  return h;
+}
 
-                cell.innerHTML = `<div class="cell-bg" id="print-bg-${p}"></div><div class="p-text" id="print-text-${p}"></div>`;
-                c.appendChild(cell);
-            });
-        }
+// ─── PRINT GRID ───
+function getCellImg(p){return document.getElementById(`print-img-${p}`);}
+function getCellText(p){return document.getElementById(`print-text-${p}`);}
+function setImgSrc(p,src,x,y){const img=getCellImg(p);if(!img)return;if(src){img.src=src;img.style.objectPosition=getBgPos(x||0,y||0);}else{img.src='';}}
 
-        function updatePrint() {
-            buildPrintGrid('sheet-1', sheet1Template);
-            buildPrintGrid('sheet-2', sheet2Template);
+function buildPrintGrid(id,tpl){
+  const c=document.getElementById(id);if(!c)return;
+  c.innerHTML='';
+  const mergedFirst={},mergedSecond={},mergedGeom={};
+  viewsData.forEach(d=>{
+    if(d.type!=='spread'||!d.merged||!d.imgL)return;
+    const geo=getSpreadGeometry(d);if(!geo)return;
+    mergedFirst[geo.first]=d;mergedSecond[geo.second]=d;mergedGeom[geo.first]=geo;
+  });
+  tpl.forEach((p,idx)=>{
+    const row=Math.floor(idx/4)+1,col=(idx%4)+1;
+    if(p===0){const cell=document.createElement('div');cell.className='cell';cell.style.gridColumnStart=col;cell.style.gridRowStart=row;c.appendChild(cell);return;}
+    if(mergedSecond[p])return;
+    const cell=document.createElement('div');cell.className='cell';cell.id=`print-cell-${p}`;
+    cell.style.gridColumnStart=col;cell.style.gridRowStart=row;
+    if(mergedFirst[p]){const geo=mergedGeom[p];if(geo.horizontal)cell.style.gridColumnEnd='span 2';else cell.style.gridRowEnd='span 2';if(geo.bothInverted)cell.classList.add('rot180');}
+    else if(invertedPages.includes(p))cell.classList.add('rot180');
+    cell.innerHTML=`<div class="cell-img-wrap" id="print-imgwrap-${p}"><img id="print-img-${p}" alt=""></div><div class="p-text" id="print-text-${p}"></div>`;
+    c.appendChild(cell);
+  });
+}
 
-            viewsData.forEach(d=>{
-                if(d.type==='cover'){
-                    const pg=d.pages[0], bg=getCellBg(pg), txt=getCellText(pg);
-                    if(bg&&d.img){ bg.style.backgroundImage=`url(${d.img})`; bg.style.backgroundPosition=getBgPos(d.imgOffsetX||0,d.imgOffsetY||0); }
-                    if(txt){ const rgb=d.overlayType==='black'?'0,0,0':'255,255,255';
-                        txt.style.background=`rgba(${rgb},${d.overlayOp/100})`;
-                        txt.style.alignItems=d.align==='left'?'flex-start':(d.align==='right'?'flex-end':'center');
-                        txt.style.justifyContent=d.justify;
-                        txt.innerHTML=`<div style="font-family:${d.font}; font-size:${coverFontSizeCss(d.fontSize)}; color:${d.color}; text-align:${d.align}; word-break:break-word;">${(d.text||'').replace(/\n/g,'<br>')}</div>`;
-                    }
-                } else if(d.type==='spread'){
-                    const pL=d.pages[0], pR=d.pages[1];
-                    if(d.merged && d.imgL){
-                        const geo = getSpreadGeometry(d);
-                        if (geo) {
-                            const off = d.mergedOffset||{x:0,y:0};
-                            const bg = getCellBg(geo.first);
-                            if (bg) { bg.style.backgroundImage = `url(${d.imgL})`; bg.style.backgroundPosition = getBgPos(off.x, off.y); }
-                        }
-                    } else if(!d.merged){
-                        if(d.imgL){ const bg=getCellBg(pL); if(bg){ bg.style.backgroundImage=`url(${d.imgL})`; const off=d.offsetL||{x:0,y:0}; bg.style.backgroundPosition=getBgPos(off.x,off.y); } }
-                        if(d.imgR){ const bg=getCellBg(pR); if(bg){ bg.style.backgroundImage=`url(${d.imgR})`; const off=d.offsetR||{x:0,y:0}; bg.style.backgroundPosition=getBgPos(off.x,off.y); } }
-                    }
-                }
-            });
-        }
+function updatePrint(){
+  buildPrintGrid('sheet-1',sheet1Template);
+  buildPrintGrid('sheet-2',sheet2Template);
+  viewsData.forEach(d=>{
+    if(d.type==='cover'){
+      setImgSrc(d.pages[0],d.img,d.imgOffsetX||0,d.imgOffsetY||0);
+      const txt=getCellText(d.pages[0]);
+      if(txt){const rgb=d.overlayType==='black'?'0,0,0':'255,255,255';txt.style.background=`rgba(${rgb},${d.overlayOp/100})`;txt.style.alignItems=d.align==='left'?'flex-start':(d.align==='right'?'flex-end':'center');txt.style.justifyContent=d.justify;txt.innerHTML=buildCoverTextHTML(d);}
+    }else if(d.type==='spread'){
+      const pL=d.pages[0],pR=d.pages[1];
+      if(d.merged&&d.imgL){const geo=getSpreadGeometry(d);if(geo){const off=d.mergedOffset||{x:0,y:0};setImgSrc(geo.first,d.imgL,off.x,off.y);}}
+      else if(!d.merged){if(d.imgL){const off=d.offsetL||{x:0,y:0};setImgSrc(pL,d.imgL,off.x,off.y);}if(d.imgR){const off=d.offsetR||{x:0,y:0};setImgSrc(pR,d.imgR,off.x,off.y);}}
+    }
+  });
+}
 
-        // ---- UNIFIED DRAG HANDLERS (MOUSE & TOUCH GESTURES) ----
-        function initDrag() {
-            const preview = document.getElementById('preview');
-            if (!preview) return;
-            
-            // Desktop Mouse Events
-            preview.addEventListener('mousedown', onDragStart);
-            window.addEventListener('mousemove', onDragMove);
-            window.addEventListener('mouseup', onDragEnd);
-            
-            // Mobile Touch Events
-            preview.addEventListener('touchstart', onDragStart, { passive: false });
-            window.addEventListener('touchmove', onDragMove, { passive: false });
-            window.addEventListener('touchend', onDragEnd);
-        }
+// ─── IMAGE COMPRESSION ───
+const MAX_IMAGE_DIM=1200,IMAGE_JPEG_QUALITY=0.82;
+function compressImage(file){
+  return new Promise(resolve=>{
+    const r=new FileReader();
+    r.onload=ev=>{
+      const original=ev.target.result;
+      const img=new Image();
+      img.onload=()=>{
+        try{
+          let{width,height}=img;const longest=Math.max(width,height);const needsScale=longest>MAX_IMAGE_DIM;
+          if(needsScale){const s=MAX_IMAGE_DIM/longest;width=Math.round(width*s);height=Math.round(height*s);}
+          const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+          canvas.getContext('2d').drawImage(img,0,0,width,height);
+          const jpeg=canvas.toDataURL('image/jpeg',IMAGE_JPEG_QUALITY);
+          const png=canvas.toDataURL('image/png');
+          let best=jpeg.length<=png.length?jpeg:png;
+          if(!needsScale&&best.length>=original.length)best=original;
+          resolve(best);
+        }catch(e){resolve(original);}
+      };
+      img.onerror=()=>resolve(original);img.src=original;
+    };
+    r.onerror=()=>resolve(null);r.readAsDataURL(file);
+  });
+}
+async function handleFileUpload(file,key){
+  if(!file||!file.type.startsWith('image/'))return;
+  const targetView=activeView;
+  // update processing label if visible
+  document.querySelectorAll(`.dropzone[data-upload-key="${key}"] .dropzone-text`).forEach(el=>{el._orig=el.textContent;el.textContent='PROCESSING…';});
+  const dataUrl=await compressImage(file);
+  document.querySelectorAll(`.dropzone[data-upload-key="${key}"] .dropzone-text`).forEach(el=>{if(el._orig)el.textContent=el._orig;});
+  if(dataUrl){viewsData[targetView][key]=dataUrl;if(targetView===activeView)renderUI();else{updatePrint();renderNavThumb(targetView);renderMobileNavThumb(targetView);}}
+}
 
-        function onDragStart(e) {
-            const isTouch = e.type.startsWith('touch');
-            const clientX = isTouch ? e.touches[0].clientX : e.clientX;
-            const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+// ─── DRAG (mouse + touch) ───
+function initDrag(){
+  const preview=document.getElementById('preview');
+  if(!preview)return;
+  // mouse
+  preview.addEventListener('mousedown',onDragStart);
+  window.addEventListener('mousemove',onDragMove);
+  window.addEventListener('mouseup',onDragEnd);
+  // touch
+  preview.addEventListener('touchstart',onTouchStart,{passive:false});
+  window.addEventListener('touchmove',onTouchMove,{passive:false});
+  window.addEventListener('touchend',onTouchEnd);
+}
+function resolveSlotTarget(slot){
+  const d=viewsData[activeView];if(!d)return null;
+  if(d.type==='cover')return d.img?'cover':null;
+  if(d.type==='spread'){
+    if(d.merged)return d.imgL?'merged':null;
+    const slots=Array.from(document.querySelectorAll('#preview .page-slot'));
+    const idx=slots.indexOf(slot);
+    if(idx===0&&d.imgL)return'left';
+    if(idx===1&&d.imgR)return'right';
+  }
+  return null;
+}
+function startDragFrom(clientX,clientY,slot){
+  const type=resolveSlotTarget(slot);if(!type)return false;
+  const d=viewsData[activeView];
+  dragActive=true;dragStartX=clientX;dragStartY=clientY;dragTarget=type;
+  if(type==='cover'){startOffsetX=d.imgOffsetX||0;startOffsetY=d.imgOffsetY||0;}
+  else if(type==='merged'){startOffsetX=d.mergedOffset?.x||0;startOffsetY=d.mergedOffset?.y||0;}
+  else if(type==='left'){startOffsetX=d.offsetL?.x||0;startOffsetY=d.offsetL?.y||0;}
+  else if(type==='right'){startOffsetX=d.offsetR?.x||0;startOffsetY=d.offsetR?.y||0;}
+  return true;
+}
+function applyDragDelta(clientX,clientY){
+  if(!dragActive)return;
+  const d=viewsData[activeView];if(!d)return;
+  const prev=document.getElementById('preview');
+  const rect=prev.getBoundingClientRect();
+  const sensX=(clientX-dragStartX)/rect.width*100*0.8;
+  const sensY=(clientY-dragStartY)/rect.height*100*0.8;
+  const clamp=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
+  const newX=clamp(startOffsetX-sensX,-50,50);
+  const newY=clamp(startOffsetY-sensY,-50,50);
+  if(dragTarget==='cover'){d.imgOffsetX=newX;d.imgOffsetY=newY;const s=document.querySelector('#preview .page-slot');if(s)s.style.backgroundPosition=getBgPos(newX,newY);}
+  else if(dragTarget==='merged'){if(!d.mergedOffset)d.mergedOffset={x:0,y:0};d.mergedOffset.x=newX;d.mergedOffset.y=newY;const s=document.querySelector('#preview .page-slot');if(s)s.style.backgroundPosition=getBgPos(newX,newY);}
+  else if(dragTarget==='left'){if(!d.offsetL)d.offsetL={x:0,y:0};d.offsetL.x=newX;d.offsetL.y=newY;const s=document.querySelectorAll('#preview .page-slot')[0];if(s)s.style.backgroundPosition=getBgPos(newX,newY);}
+  else if(dragTarget==='right'){if(!d.offsetR)d.offsetR={x:0,y:0};d.offsetR.x=newX;d.offsetR.y=newY;const s=document.querySelectorAll('#preview .page-slot')[1];if(s)s.style.backgroundPosition=getBgPos(newX,newY);}
+}
+function endDrag(){if(dragActive){updatePrint();renderNavThumb(activeView);renderMobileNavThumb(activeView);}dragActive=false;dragTarget=null;}
+function onDragStart(e){const slot=e.target.closest('.page-slot');if(!slot)return;if(startDragFrom(e.clientX,e.clientY,slot))e.preventDefault();}
+function onDragMove(e){if(!dragActive)return;e.preventDefault();applyDragDelta(e.clientX,e.clientY);}
+function onDragEnd(){endDrag();}
+let touchId=null,touchDragging=false,touchTapSlot=null,touchStartTime=0;
+function onTouchStart(e){
+  if(e.touches.length!==1)return;
+  const t=e.touches[0];
+  const slot=t.target.closest('.page-slot');
+  if(!slot)return;
+  touchId=t.identifier;touchStartTime=Date.now();touchTapSlot=slot;touchDragging=false;
+  startDragFrom(t.clientX,t.clientY,slot);
+  // don't prevent default yet — wait to see if it's a drag
+}
+function onTouchMove(e){
+  if(!dragActive)return;
+  const t=Array.from(e.touches).find(t=>t.identifier===touchId);
+  if(!t)return;
+  const dist=Math.hypot(t.clientX-dragStartX,t.clientY-dragStartY);
+  if(dist>6){touchDragging=true;e.preventDefault();applyDragDelta(t.clientX,t.clientY);}
+}
+function onTouchEnd(e){
+  if(!touchDragging&&touchTapSlot&&(Date.now()-touchStartTime)<350){
+    dragActive=false;dragTarget=null;
+    // Only programmatically trigger upload if the slot already has an image
+    // (tap-upload overlay is hidden in that case). When no image, the
+    // tap-upload overlay's own <input> handles the tap natively — triggering
+    // a second picker here would open the dialog twice.
+    const slotHasImage=touchTapSlot.classList.contains('has-image');
+    if(slotHasImage){triggerTapUpload(touchTapSlot);}
+  }else{endDrag();}
+  touchId=null;touchDragging=false;touchTapSlot=null;
+}
+function triggerTapUpload(slot){
+  const d=viewsData[activeView];
+  const slots=Array.from(document.querySelectorAll('#preview .page-slot'));
+  const idx=slots.indexOf(slot);
+  let key='img';
+  if(d.type==='spread'){key=(!d.merged&&idx===1)?'imgR':'imgL';}
+  // create temporary file input
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=()=>{if(inp.files[0])handleFileUpload(inp.files[0],key);};
+  inp.click();
+}
 
-            const slot = e.target.closest('.page-slot');
-            if (!slot) return;
-            const d = viewsData[activeView];
-            if (!d) return;
-            let targetType = null;
-            if (d.type === 'cover') {
-                if (d.img) targetType = 'cover';
-            } else if (d.type === 'spread') {
-                if (d.merged) {
-                    if (d.imgL) targetType = 'merged';
-                } else {
-                    const slots = Array.from(document.querySelectorAll('#preview .page-slot'));
-                    const index = slots.indexOf(slot);
-                    if (index === 0 && d.imgL) targetType = 'left';
-                    else if (index === 1 && d.imgR) targetType = 'right';
-                }
-            }
-            if (!targetType) return;
-            dragActive = true;
-            dragStartX = clientX;
-            dragStartY = clientY;
-            dragTarget = targetType;
-            if (targetType === 'cover') { startOffsetX = d.imgOffsetX||0; startOffsetY = d.imgOffsetY||0; }
-            else if (targetType === 'merged') { startOffsetX = d.mergedOffset?.x||0; startOffsetY = d.mergedOffset?.y||0; }
-            else if (targetType === 'left') { startOffsetX = d.offsetL?.x||0; startOffsetY = d.offsetL?.y||0; }
-            else if (targetType === 'right') { startOffsetX = d.offsetR?.x||0; startOffsetY = d.offsetR?.y||0; }
-            
-            if (isTouch) e.preventDefault();
-        }
+// ─── DROP ONTO PREVIEW ───
+function initPreviewDrop(){
+  const prev=document.getElementById('preview');if(!prev)return;
+  prev.addEventListener('dragover',e=>{e.preventDefault();prev.classList.add('dragover');});
+  prev.addEventListener('dragleave',()=>prev.classList.remove('dragover'));
+  prev.addEventListener('drop',async e=>{
+    e.preventDefault();prev.classList.remove('dragover');
+    const files=e.dataTransfer.files;if(!files.length)return;
+    const file=files[0];if(!file.type.startsWith('image/'))return;
+    const targetView=activeView;
+    const rect=prev.getBoundingClientRect();
+    const mouseX=e.clientX-rect.left;
+    const dataUrl=await compressImage(file);if(!dataUrl)return;
+    const data=viewsData[targetView];
+    if(data.type==='cover')data.img=dataUrl;
+    else if(data.type==='spread'){if(data.merged)data.imgL=dataUrl;else if(mouseX<rect.width/2)data.imgL=dataUrl;else data.imgR=dataUrl;}
+    if(targetView===activeView)renderUI();else{updatePrint();renderNavThumb(targetView);}
+  });
+}
 
-        function onDragMove(e) {
-            if (!dragActive) return;
-            const isTouch = e.type.startsWith('touch');
-            const clientX = isTouch ? e.touches[0].clientX : e.clientX;
-            const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+// ─── RENDER PREVIEW ───
+function hasImage(d,side){
+  if(d.type==='cover')return!!d.img;
+  if(d.merged)return!!d.imgL;
+  return side==='left'?!!d.imgL:!!d.imgR;
+}
+function tapUploadHTML(key){return`<div class="tap-upload"><input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'${key}')"><div class="tap-upload-icon">📷</div><div class="tap-upload-label">Tap to add photo</div></div>`;}
 
-            const d = viewsData[activeView];
-            if (!d) return;
-            const deltaX = clientX - dragStartX;
-            const deltaY = clientY - dragStartY;
-            const sens = 0.4;
-            let newX = startOffsetX - deltaX * sens;
-            let newY = startOffsetY - deltaY * sens;
-            newX = Math.min(50, Math.max(-50, newX));
-            newY = Math.min(50, Math.max(-50, newY));
-            
-            if (dragTarget === 'cover') {
-                d.imgOffsetX = newX; d.imgOffsetY = newY;
-                const slot = document.querySelector('#preview .page-slot');
-                if (slot) slot.style.backgroundPosition = getBgPos(newX, newY);
-            } else if (dragTarget === 'merged') {
-                if (!d.mergedOffset) d.mergedOffset = {x:0,y:0};
-                d.mergedOffset.x = newX; d.mergedOffset.y = newY;
-                const slot = document.querySelector('#preview .page-slot');
-                if (slot) slot.style.backgroundPosition = getBgPos(newX, newY);
-            } else if (dragTarget === 'left') {
-                if (!d.offsetL) d.offsetL = {x:0,y:0};
-                d.offsetL.x = newX; d.offsetL.y = newY;
-                const leftSlot = document.querySelectorAll('#preview .page-slot')[0];
-                if (leftSlot) leftSlot.style.backgroundPosition = getBgPos(newX, newY);
-            } else if (dragTarget === 'right') {
-                if (!d.offsetR) d.offsetR = {x:0,y:0};
-                d.offsetR.x = newX; d.offsetR.y = newY;
-                const rightSlot = document.querySelectorAll('#preview .page-slot')[1];
-                if (rightSlot) rightSlot.style.backgroundPosition = getBgPos(newX, newY);
-            }
-            if (isTouch) e.preventDefault();
-        }
+function renderUI(){
+  const d=viewsData[activeView];
+  document.querySelectorAll('.nav-item').forEach((el,i)=>el.classList.toggle('active',i===activeView));
+  renderMobileNav();
+  const prev=document.getElementById('preview');
+  prev.className=`preview-box ${d.type==='cover'?'portrait':'landscape'}`;
+  if(d.type==='cover'){
+    const rgb=d.overlayType==='black'?'0,0,0':'255,255,255';
+    prev.innerHTML=`<div class="page-slot${d.img?' has-image':''}" style="background-image:url(${d.img||''});background-size:cover;background-position:${getBgPos(d.imgOffsetX||0,d.imgOffsetY||0)};"><div class="text-overlay-container" id="previewOverlay" style="background:rgba(${rgb},${d.overlayOp/100});align-items:${d.align==='left'?'flex-start':(d.align==='right'?'flex-end':'center')};justify-content:${d.justify};">${buildCoverTextHTML(d)}</div>${tapUploadHTML('img')}</div><div class="drag-hint">Drag to pan · Tap to change photo</div>`;
+  }else if(d.merged){
+    const off=d.mergedOffset||{x:0,y:0};
+    prev.innerHTML=`<div class="page-slot${d.imgL?' has-image':''}" style="background-image:url(${d.imgL||''});background-size:cover;background-position:${getBgPos(off.x,off.y)};">${tapUploadHTML('imgL')}</div><div class="drag-hint">Drag to pan · Tap to change photo</div>`;
+  }else{
+    const offL=d.offsetL||{x:0,y:0},offR=d.offsetR||{x:0,y:0};
+    prev.innerHTML=`<div class="page-slot spine-line${d.imgL?' has-image':''}" style="background-image:url(${d.imgL||''});background-size:cover;background-position:${getBgPos(offL.x,offL.y)};">${tapUploadHTML('imgL')}</div><div class="page-slot${d.imgR?' has-image':''}" style="background-image:url(${d.imgR||''});background-size:cover;background-position:${getBgPos(offR.x,offR.y)};">${tapUploadHTML('imgR')}</div><div class="drag-hint">Drag left/right to pan</div>`;
+  }
+  buildToolbar(d);
+  buildMobileSheet(d);
+  updatePrint();
+  renderNavThumb(activeView);
+}
 
-        function onDragEnd() {
-            if (dragActive) { updatePrint(); }
-            dragActive = false;
-            dragTarget = null;
-        }
+// ─── SIDEBAR NAV THUMBS ───
+function buildNavThumbHTML(d){
+  if(d.type==='cover'){
+    const rgb=d.overlayType==='black'?'0,0,0':'255,255,255';
+    return`<div class="nav-thumb portrait"><div class="nav-thumb-slot" style="background-image:url(${d.img||''});background-position:${getBgPos(d.imgOffsetX||0,d.imgOffsetY||0)};"><div class="nav-thumb-text" style="background:rgba(${rgb},${d.overlayOp/100});align-items:${d.align==='left'?'flex-start':(d.align==='right'?'flex-end':'center')};justify-content:${d.justify};">${buildCoverTextHTML(d)}</div></div></div>`;
+  }
+  if(d.merged){const off=d.mergedOffset||{x:0,y:0};return`<div class="nav-thumb landscape"><div class="nav-thumb-slot" style="background-image:url(${d.imgL||''});background-position:${getBgPos(off.x,off.y)};"></div></div>`;}
+  const offL=d.offsetL||{x:0,y:0},offR=d.offsetR||{x:0,y:0};
+  return`<div class="nav-thumb landscape"><div class="nav-thumb-slot" style="background-image:url(${d.imgL||''});background-position:${getBgPos(offL.x,offL.y)};"></div><div class="nav-thumb-slot" style="background-image:url(${d.imgR||''});background-position:${getBgPos(offR.x,offR.y)};"></div></div>`;
+}
+function renderNavThumb(i){const item=document.querySelectorAll('.nav-item')[i];if(!item)return;const tc=item.querySelector('.nav-thumb-container');if(tc)tc.innerHTML=buildNavThumbHTML(viewsData[i]);}
+function renderAllNavThumbs(){viewsData.forEach((_,i)=>renderNavThumb(i));}
 
-        // ---- DROP IMAGE ONTO PREVIEW ----
-        function initPreviewDrop() {
-            const preview = document.getElementById('preview');
-            if (!preview) return;
-            preview.addEventListener('dragover', (e) => { e.preventDefault(); preview.classList.add('dragover'); });
-            preview.addEventListener('dragleave', () => { preview.classList.remove('dragover'); });
-            preview.addEventListener('drop', (e) => {
-                e.preventDefault();
-                preview.classList.remove('dragover');
-                const files = e.dataTransfer.files;
-                if (files.length === 0) return;
-                const file = files[0];
-                if (!file.type.startsWith('image/')) return;
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    const data = viewsData[activeView];
-                    if (data.type === 'cover') {
-                        data.img = ev.target.result;
-                    } else if (data.type === 'spread') {
-                        if (data.merged) {
-                            data.imgL = ev.target.result;
-                        } else {
-                            const rect = preview.getBoundingClientRect();
-                            const mouseX = e.clientX - rect.left;
-                            const half = rect.width / 2;
-                            if (mouseX < half) data.imgL = ev.target.result;
-                            else data.imgR = ev.target.result;
-                        }
-                    }
-                    renderUI();
-                };
-                reader.readAsDataURL(file);
-            });
-        }
+// ─── MOBILE NAV ───
+function renderMobileNav(){
+  const inner=document.getElementById('mobile-nav-inner');if(!inner)return;
+  inner.innerHTML='';
+  viewsData.forEach((d,i)=>{
+    const div=document.createElement('div');
+    div.className='mobile-nav-item'+(i===activeView?' active':'');
+    div.innerHTML=buildMobileNavThumb(d)+`<div class="mn-label">${d.label.replace('PAGES ','').replace(' COVER','')}</div>`;
+    div.onclick=()=>{activeView=i;renderUI();};
+    inner.appendChild(div);
+  });
+  // scroll active into view
+  setTimeout(()=>{const active=inner.querySelector('.mobile-nav-item.active');if(active)active.scrollIntoView({inline:'center',behavior:'smooth'});},50);
+}
+function buildMobileNavThumb(d){
+  if(d.type==='cover'){
+    return`<div class="mobile-nav-thumb portrait"><div class="mn-slot" style="background-image:url(${d.img||''});background-size:cover;background-position:center;"></div></div>`;
+  }
+  if(d.merged){return`<div class="mobile-nav-thumb landscape"><div class="mn-slot" style="background-image:url(${d.imgL||''});background-size:cover;"></div></div>`;}
+  return`<div class="mobile-nav-thumb landscape"><div class="mn-slot" style="background-image:url(${d.imgL||''});background-size:cover;"></div><div class="mn-slot" style="background-image:url(${d.imgR||''});background-size:cover;"></div></div>`;
+}
+function renderMobileNavThumb(i){
+  const items=document.querySelectorAll('.mobile-nav-item');
+  if(items[i])items[i].querySelector('.mobile-nav-thumb').outerHTML;
+  renderMobileNav();// simple rebuild since it's cheap
+}
 
-        // ---- RENDER PREVIEW ----
-        function renderUI() {
-            const d = viewsData[activeView];
-            document.querySelectorAll('.nav-item').forEach((el,i)=>el.classList.toggle('active',i===activeView));
-            const prev = document.getElementById('preview');
-            prev.className = `preview-box ${d.type==='cover'?'portrait':'landscape'}`;
-            if (d.type === 'cover') {
-                const rgb = d.overlayType==='black'?'0,0,0':'255,255,255';
-                const fs = coverFontSizeCss(d.fontSize);
-                prev.innerHTML = `<div class="page-slot" style="background-image:url(${d.img||''}); background-size:cover; background-position:${getBgPos(d.imgOffsetX||0,d.imgOffsetY||0)};"><div class="text-overlay-container" id="previewOverlay" style="background:rgba(${rgb},${d.overlayOp/100}); align-items:${d.align==='left'?'flex-start':(d.align==='right'?'flex-end':'center')}; justify-content:${d.justify};"><div style="font-family:${d.font}; font-size:${fs}; color:${d.color}; text-align:${d.align}; word-break:break-word;">${(d.text||'').replace(/\n/g,'<br>')}</div></div></div><div class="drag-hint">🖱️ Drag to reposition · 📂 Drop image here</div>`;
-            } else if (d.merged) {
-                const off = d.mergedOffset||{x:0,y:0};
-                prev.innerHTML = `<div class="page-slot" style="background-image:url(${d.imgL||''}); background-size:cover; background-position:${getBgPos(off.x,off.y)};"></div><div class="drag-hint">🖱️ Drag spread · 📂 Drop image</div>`;
-            } else {
-                const offL = d.offsetL||{x:0,y:0}, offR = d.offsetR||{x:0,y:0};
-                prev.innerHTML = `<div class="page-slot spine-line" style="background-image:url(${d.imgL||''}); background-size:cover; background-position:${getBgPos(offL.x,offL.y)};"></div><div class="page-slot" style="background-image:url(${d.imgR||''}); background-size:cover; background-position:${getBgPos(offR.x,offR.y)};"></div><div class="drag-hint">🖱️ Drag left/right side · 📂 Drop image here</div>`;
-            }
-            buildToolbar(d);
-            updatePrint();
-        }
+// ─── DESKTOP TOOLBAR ───
+function buildToolbar(d){
+  const tb=document.getElementById('toolbar');if(!tb)return;
+  if(d.type==='cover'){
+    let opts='';fontOptions.forEach(o=>{opts+=`<option value="${o.value}"${d.font===o.value?' selected':''}>${o.name}</option>`;});
+    tb.innerHTML=`
+    <div class="tool-panel"><strong>COVER IMAGE</strong>
+      <div class="dropzone" data-upload-key="img"><span class="dropzone-text">DRAG / CLICK</span><input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'img')"></div>
+      <div class="row"><select onchange="updateOverlayType(this.value)"><option value="black"${d.overlayType==='black'?' selected':''}>Darken</option><option value="white"${d.overlayType==='white'?' selected':''}>Lighten</option></select><input type="range" min="0" max="100" value="${d.overlayOp}" oninput="updateOverlayOpacity(this.value)"></div>
+    </div>
+    <div class="tool-panel"><strong>TEXT</strong>
+      <textarea id="temp-text-input" placeholder="Title…">${d.text||''}</textarea>
+      <button class="apply-btn" onclick="applyText()">APPLY</button>
+      <input type="text" id="subtitle-input" placeholder="Subtitle (optional)" value="${escHtml(d.subtitle||'')}" oninput="updateSubAuthorLive('subtitle',this.value)">
+      <input type="text" id="author-input" placeholder="Author (optional)" value="${escHtml(d.author||'')}" oninput="updateSubAuthorLive('author',this.value)">
+    </div>
+    <div class="tool-panel"><strong>FONT & SIZE</strong>
+      <select onchange="updateProp('font',this.value)">${opts}</select>
+      <div class="row"><span style="font-size:.7rem">Size</span><input type="range" min="2" max="15" step=".5" value="${d.fontSize}" oninput="updateFontSizeLive(this.value)"><span class="font-size-label">${d.fontSize}</span></div>
+      <input type="color" value="${d.color}" onchange="updateProp('color',this.value)">
+    </div>
+    <div class="tool-panel"><strong>ALIGNMENT</strong>
+      <div class="align-btn-group"><div class="align-btn${d.align==='left'?' active':''}" onclick="setAlign('left')">← L</div><div class="align-btn${d.align==='center'?' active':''}" onclick="setAlign('center')">↔ C</div><div class="align-btn${d.align==='right'?' active':''}" onclick="setAlign('right')">R →</div></div>
+      <div class="align-btn-group"><div class="align-btn${d.justify==='flex-start'?' active':''}" onclick="setJustify('flex-start')">↑ TOP</div><div class="align-btn${d.justify==='center'?' active':''}" onclick="setJustify('center')">◉ MID</div><div class="align-btn${d.justify==='flex-end'?' active':''}" onclick="setJustify('flex-end')">↓ BOT</div></div>
+    </div>`;
+  }else if(d.merged){
+    tb.innerHTML=`
+    <div class="tool-panel"><strong>MERGE SPREAD</strong><label><input type="checkbox" onchange="toggleMerge(event)" checked> Single image across both pages</label></div>
+    <div class="tool-panel"><strong>SPREAD IMAGE</strong><div class="dropzone" data-upload-key="imgL"><span class="dropzone-text">DROP IMAGE</span><input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'imgL')"></div></div>`;
+  }else{
+    tb.innerHTML=`
+    <div class="tool-panel"><strong>MERGE SPREAD</strong><label><input type="checkbox" onchange="toggleMerge(event)"> Single image across both pages</label></div>
+    <div class="tool-panel"><strong>LEFT PAGE (${d.pages[0]})</strong><div class="dropzone" data-upload-key="imgL"><span class="dropzone-text">DROP IMAGE</span><input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'imgL')"></div></div>
+    <div class="tool-panel"><strong>RIGHT PAGE (${d.pages[1]})</strong><div class="dropzone" data-upload-key="imgR"><span class="dropzone-text">DROP IMAGE</span><input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'imgR')"></div></div>`;
+  }
+  setupDragDrop();
+}
 
-        // ---- TOOLBAR HELPERS ----
-        function updateFontSizeLive(v){
-            const d=viewsData[activeView]; if(d.type!=='cover') return;
-            d.fontSize=parseFloat(v);
-            const fs = coverFontSizeCss(d.fontSize);
-            const pd=document.querySelector('#preview .text-overlay-container div'); if(pd) pd.style.fontSize=fs;
-            const pt=getCellText(d.pages[0]); if(pt){ const idiv=pt.querySelector('div'); if(idiv) idiv.style.fontSize=fs; }
-            const lbl=document.querySelector('.font-size-label'); if(lbl) lbl.textContent=`${d.fontSize}`;
-        }
-        function updateOverlayOpacity(v){
-            const d=viewsData[activeView]; if(d.type!=='cover') return;
-            d.overlayOp=parseInt(v); const po=document.getElementById('previewOverlay'); if(po){ const rgb=d.overlayType==='black'?'0,0,0':'255,255,255'; po.style.background=`rgba(${rgb},${d.overlayOp/100})`; }
-            const pt=getCellText(d.pages[0]); if(pt){ const rgb=d.overlayType==='black'?'0,0,0':'255,255,255'; pt.style.background=`rgba(${rgb},${d.overlayOp/100})`; }
-        }
-        function updateOverlayType(t){ const d=viewsData[activeView]; d.overlayType=t; d.color=t==='black'?'#ffffff':'#000000'; renderUI(); }
-        function setupDragDrop(){ document.querySelectorAll('.dropzone').forEach(dz=>{ dz.removeEventListener('dragover',dz._dh); dz.removeEventListener('dragleave',dz._dl); dz.removeEventListener('drop',dz._dp);
-            const dh=e=>{e.preventDefault(); dz.classList.add('dragover');}; const dl=()=>{dz.classList.remove('dragover');}; const dp=e=>{e.preventDefault(); dz.classList.remove('dragover'); const f=e.dataTransfer.files; if(f.length>0){ const key=dz.getAttribute('data-upload-key')||'imgL'; handleFileUpload(f[0],key); }};
-            dz._dh=dh; dz._dl=dl; dz._dp=dp; dz.addEventListener('dragover',dh); dz.addEventListener('dragleave',dl); dz.addEventListener('drop',dp); }); }
-        function handleFileUpload(file,key){ if(!file||!file.type.startsWith('image/')) return; const r=new FileReader(); r.onload=ev=>{ viewsData[activeView][key]=ev.target.result; renderUI(); }; r.readAsDataURL(file); }
-        
-        function buildToolbar(d){
-            const tb=document.getElementById('toolbar'); if(!tb) return;
-            if(d.type==='cover'){
-                let opts=''; fontOptions.forEach(o=>{ const sel=(d.font===o.value)?'selected':''; opts+=`<option value="${o.value}" ${sel}>${o.name}</option>`; });
-                tb.innerHTML=`<div class="tool-panel"><strong>COVER IMAGE</strong><div class="dropzone" data-upload-key="img"><span class="dropzone-text">DRAG / CLICK</span><input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'img')"></div><div class="row"><select onchange="updateOverlayType(this.value)"><option value="black" ${d.overlayType==='black'?'selected':''}>Darken</option><option value="white" ${d.overlayType==='white'?'selected':''}>Whiten</option></select><input type="range" min="0" max="100" value="${d.overlayOp}" oninput="updateOverlayOpacity(this.value)"></div></div><div class="tool-panel"><strong>TEXT</strong><textarea id="temp-text-input" placeholder="Enter cover text...">${d.text||''}</textarea><button class="apply-btn" onclick="applyText()">APPLY</button></div><div class="tool-panel"><strong>FONT & SIZE</strong><select onchange="updateProp('font',this.value)">${opts}</select><div class="row"><span style="font-size:0.7rem;">Size</span><input type="range" min="2" max="15" step="0.5" value="${d.fontSize}" oninput="updateFontSizeLive(this.value)"><span class="font-size-label" style="font-size:0.7rem; width:45px;">${d.fontSize}</span></div><input type="color" value="${d.color}" onchange="updateProp('color',this.value)"></div><div class="tool-panel"><strong>ALIGNMENT</strong><div class="align-btn-group"><div class="align-btn ${d.align==='left'?'active':''}" onclick="setAlign('left')">← L</div><div class="align-btn ${d.align==='center'?'active':''}" onclick="setAlign('center')">↔ C</div><div class="align-btn ${d.align==='right'?'active':''}" onclick="setAlign('right')">R →</div></div><div class="align-btn-group"><div class="align-btn ${d.justify==='flex-start'?'active':''}" onclick="setJustify('flex-start')">↑ TOP</div><div class="align-btn ${d.justify==='center'?'active':''}" onclick="setJustify('center')">◉ MID</div><div class="align-btn ${d.justify==='flex-end'?'active':''}" onclick="setJustify('flex-end')">↓ BOT</div></div></div>`;
-            } else if(d.merged){
-                tb.innerHTML=`<div class="tool-panel"><strong>MERGE SPREAD</strong><label><input type="checkbox" onchange="toggleMerge(event)" checked> Single image across both pages</label></div><div class="tool-panel"><strong>SPREAD IMAGE</strong><div class="dropzone" data-upload-key="imgL"><span class="dropzone-text">DROP IMAGE</span><input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'imgL')"></div></div><div class="tool-panel"><em>Spread prints with correct rotation (fixed 14-15 & 8-9)</em></div>`;
-            } else {
-                tb.innerHTML=`<div class="tool-panel"><strong>MERGE SPREAD</strong><label><input type="checkbox" onchange="toggleMerge(event)"> Single image across both pages</label></div><div class="tool-panel"><strong>LEFT PAGE (Pg ${d.pages[0]})</strong><div class="dropzone" data-upload-key="imgL"><span class="dropzone-text">DROP IMAGE</span><input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'imgL')"></div></div><div class="tool-panel"><strong>RIGHT PAGE (Pg ${d.pages[1]})</strong><div class="dropzone" data-upload-key="imgR"><span class="dropzone-text">DROP IMAGE</span><input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'imgR')"></div></div>`;
-            }
-            setupDragDrop();
-        }
-        function updateProp(p,v){ viewsData[activeView][p]=v; renderUI(); }
-        function applyText(){ const inp=document.getElementById('temp-text-input'); if(inp) viewsData[activeView].text=inp.value; renderUI(); }
-        function setAlign(a){ viewsData[activeView].align=a; renderUI(); }
-        function setJustify(j){ viewsData[activeView].justify=j; renderUI(); }
-        function toggleMerge(e){ const d=viewsData[activeView]; d.merged=e.target.checked; if(d.merged){ d.imgR=null; if(!d.mergedOffset) d.mergedOffset={x:0,y:0}; } else { if(!d.offsetL) d.offsetL={x:0,y:0}; if(!d.offsetR) d.offsetR={x:0,y:0}; } renderUI(); }
+// ─── MOBILE SHEET ───
+function buildMobileSheet(d){
+  const content=document.getElementById('mobile-sheet-content');
+  const title=document.getElementById('sheet-title');
+  if(!content)return;
+  title.textContent=d.label;
+  if(d.type==='cover'){
+    let opts='';fontOptions.forEach(o=>{opts+=`<option value="${o.value}"${d.font===o.value?' selected':''}>${o.name}</option>`;});
+    content.innerHTML=`
+    <div class="sheet-section"><strong>PHOTO</strong>
+      <div class="mobile-dropzone" onclick="this.querySelector('input').click()">📷 TAP TO ADD / CHANGE PHOTO<input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'img');closeSheet()"></div>
+      <div class="row"><select onchange="updateOverlayType(this.value)" style="flex:1"><option value="black"${d.overlayType==='black'?' selected':''}>Darken overlay</option><option value="white"${d.overlayType==='white'?' selected':''}>Lighten overlay</option></select><input type="range" min="0" max="100" value="${d.overlayOp}" oninput="updateOverlayOpacity(this.value)" style="flex:2"></div>
+    </div>
+    <div class="sheet-section"><strong>TEXT</strong>
+      <textarea id="m-text-input" placeholder="Title…" rows="2">${d.text||''}</textarea>
+      <button class="apply-btn" onclick="applyText('m-text-input')">APPLY TITLE</button>
+      <input type="text" id="m-subtitle" placeholder="Subtitle (optional)" value="${escHtml(d.subtitle||'')}" oninput="updateSubAuthorLive('subtitle',this.value)">
+      <input type="text" id="m-author" placeholder="Author (optional)" value="${escHtml(d.author||'')}" oninput="updateSubAuthorLive('author',this.value)">
+    </div>
+    <div class="sheet-section"><strong>FONT & SIZE</strong>
+      <select onchange="updateProp('font',this.value)">${opts}</select>
+      <div class="row"><span style="font-size:.7rem;min-width:28px">Size</span><input type="range" min="2" max="15" step=".5" value="${d.fontSize}" oninput="updateFontSizeLive(this.value)" style="flex:1"><span class="font-size-label">${d.fontSize}</span></div>
+      <div class="row"><span style="font-size:.7rem">Color</span><input type="color" value="${d.color}" onchange="updateProp('color',this.value)"></div>
+    </div>
+    <div class="sheet-section"><strong>LAYOUT</strong>
+      <div class="align-btn-group"><div class="align-btn${d.align==='left'?' active':''}" onclick="setAlign('left')">← L</div><div class="align-btn${d.align==='center'?' active':''}" onclick="setAlign('center')">↔ C</div><div class="align-btn${d.align==='right'?' active':''}" onclick="setAlign('right')">R →</div></div>
+      <div class="align-btn-group"><div class="align-btn${d.justify==='flex-start'?' active':''}" onclick="setJustify('flex-start')">↑ TOP</div><div class="align-btn${d.justify==='center'?' active':''}" onclick="setJustify('center')">◉ MID</div><div class="align-btn${d.justify==='flex-end'?' active':''}" onclick="setJustify('flex-end')">↓ BOT</div></div>
+    </div>
+    <div class="sheet-section">
+      <button class="apply-btn" onclick="openTutorial();closeSheet()" style="background:#ffe600;color:#111;border:var(--border)">📖 FOLD & CUT TUTORIAL</button>
+      <button class="apply-btn" onclick="window.print();closeSheet()">🖨 PRINT BOOKLET</button>
+    </div>`;
+  }else if(d.merged){
+    content.innerHTML=`
+    <div class="sheet-section"><strong>SPREAD IMAGE</strong>
+      <div class="mobile-dropzone" onclick="this.querySelector('input').click()">📷 TAP TO ADD / CHANGE PHOTO<input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'imgL');closeSheet()"></div>
+      <label style="font-size:.75rem"><input type="checkbox" checked onchange="toggleMerge(event)"> Single image across both pages</label>
+    </div>
+    <div class="sheet-section"><button class="apply-btn" onclick="window.print();closeSheet()">🖨 PRINT BOOKLET</button></div>`;
+  }else{
+    content.innerHTML=`
+    <div class="sheet-section"><strong>LEFT PAGE (${d.pages[0]})</strong>
+      <div class="mobile-dropzone" onclick="this.querySelector('input').click()">📷 ADD LEFT PAGE PHOTO<input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'imgL');closeSheet()"></div>
+    </div>
+    <div class="sheet-section"><strong>RIGHT PAGE (${d.pages[1]})</strong>
+      <div class="mobile-dropzone" onclick="this.querySelector('input').click()">📷 ADD RIGHT PAGE PHOTO<input type="file" accept="image/*" onchange="handleFileUpload(this.files[0],'imgR');closeSheet()"></div>
+    </div>
+    <div class="sheet-section"><label style="font-size:.75rem"><input type="checkbox"${d.merged?' checked':''} onchange="toggleMerge(event)"> Single image across both pages</label></div>
+    <div class="sheet-section"><button class="apply-btn" onclick="window.print();closeSheet()">🖨 PRINT BOOKLET</button></div>`;
+  }
+}
+function openSheet(){document.getElementById('mobile-sheet').classList.add('open');}
+function closeSheet(){document.getElementById('mobile-sheet').classList.remove('open');}
 
-        function init(){
-            const nav=document.getElementById('nav-list'); nav.innerHTML='';
-            viewsData.forEach((v,i)=>{
-                const div=document.createElement('div');
-                div.className='nav-item'+(i===0?' active':'');
-                div.textContent=v.label;
-                div.onclick=()=>{
-                    activeView=i;
-                    renderUI();
-                    // Smoothly center the selected tab on mobile swipe bar
-                    div.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                };
-                nav.appendChild(div);
-            });
-            renderUI();
-            initDrag();
-            initPreviewDrop();
-        }
-        window.onload = init;
-    </script>
+// ─── TOOLBAR HELPERS ───
+function updateFontSizeLive(v){
+  const d=viewsData[activeView];if(d.type!=='cover')return;
+  d.fontSize=parseFloat(v);
+  document.querySelectorAll('.font-size-label').forEach(el=>el.textContent=v);
+  const po=document.getElementById('previewOverlay');if(po)po.innerHTML=buildCoverTextHTML(d);
+  const pt=getCellText(d.pages[0]);if(pt)pt.innerHTML=buildCoverTextHTML(d);
+  renderNavThumb(activeView);
+}
+function updateOverlayOpacity(v){
+  const d=viewsData[activeView];if(d.type!=='cover')return;
+  d.overlayOp=parseInt(v);
+  const rgb=d.overlayType==='black'?'0,0,0':'255,255,255';
+  const po=document.getElementById('previewOverlay');if(po)po.style.background=`rgba(${rgb},${d.overlayOp/100})`;
+  const pt=getCellText(d.pages[0]);if(pt)pt.style.background=`rgba(${rgb},${d.overlayOp/100})`;
+}
+function updateOverlayType(t){const d=viewsData[activeView];d.overlayType=t;d.color=t==='black'?'#ffffff':'#000000';renderUI();}
+function updateProp(p,v){viewsData[activeView][p]=v;renderUI();}
+function applyText(inputId){
+  const id=inputId||'temp-text-input';
+  const inp=document.getElementById(id);
+  if(inp)viewsData[activeView].text=inp.value;
+  renderUI();
+}
+function updateSubAuthorLive(field,v){
+  const d=viewsData[activeView];if(d.type!=='cover')return;
+  d[field]=v;
+  const po=document.getElementById('previewOverlay');if(po)po.innerHTML=buildCoverTextHTML(d);
+  const pt=getCellText(d.pages[0]);if(pt)pt.innerHTML=buildCoverTextHTML(d);
+  renderNavThumb(activeView);
+}
+function setAlign(a){viewsData[activeView].align=a;renderUI();}
+function setJustify(j){viewsData[activeView].justify=j;renderUI();}
+function toggleMerge(e){
+  const d=viewsData[activeView];d.merged=e.target.checked;
+  if(d.merged){d.imgR=null;if(!d.mergedOffset)d.mergedOffset={x:0,y:0};}
+  else{if(!d.offsetL)d.offsetL={x:0,y:0};if(!d.offsetR)d.offsetR={x:0,y:0};}
+  renderUI();
+}
+function setupDragDrop(){
+  document.querySelectorAll('.dropzone').forEach(dz=>{
+    dz.removeEventListener('dragover',dz._dh);dz.removeEventListener('dragleave',dz._dl);dz.removeEventListener('drop',dz._dp);
+    dz._dh=e=>{e.preventDefault();dz.classList.add('dragover');};
+    dz._dl=()=>dz.classList.remove('dragover');
+    dz._dp=e=>{e.preventDefault();dz.classList.remove('dragover');const f=e.dataTransfer.files;if(f.length){const key=dz.getAttribute('data-upload-key')||'imgL';handleFileUpload(f[0],key);}};
+    dz.addEventListener('dragover',dz._dh);dz.addEventListener('dragleave',dz._dl);dz.addEventListener('drop',dz._dp);
+  });
+}
+
+// ─── TUTORIAL ───
+function openTutorial(){
+  document.getElementById('tutorial-modal').classList.add('open');
+  buildTutorialSteps();
+}
+function closeTutorial(){document.getElementById('tutorial-modal').classList.remove('open');}
+document.getElementById('tutorial-modal').addEventListener('click',function(e){if(e.target===this)closeTutorial();});
+
+function buildTutorialSteps(){
+  const grid=document.getElementById('steps-grid');
+  grid.innerHTML='';
+  const steps=[
+    {num:1,text:"Print the layout on BOTH sides of one sheet of paper. Print side 1, flip the sheet, then print side 2.",svg:svgPrintSheet()},
+    {num:2,text:"Fold the sheet in half the LONG WAY (hot-dog fold). Left half folds onto right half. Crease firmly.",svg:svgFoldLong()},
+    {num:3,text:"Fold each open side in half the long way again. You now have 4 tall thin strips.",svg:svgFold4Strips()},
+    {num:4,text:"Unfold flat. Now fold in half the SHORT WAY (hamburger fold). You now have 8 rectangles from all the crease lines.",svg:svgFoldShort()},
+    {num:5,text:"Fold the sheet long way again. CUT along the 2 inner vertical creases (top and bottom only — not the middle spine). This gives you the 3 cut sections.",svg:svgCut3()},
+    {num:6,text:"Cut the INNER MIDDLE crease — between pages 5–2 and 13–10. This splits the inner section into two 'tent' shapes.",svg:svgCutTents()},
+    {num:7,text:"Looking at side 2 (pages 2 and 5 columns), fold the 4 middle squares inward toward the spine.",svg:svgFoldMiddle()},
+    {num:8,text:"Fold the top and bottom panels in, then fold the whole thing once more — all the pages fan out in order.",svg:svgFoldTopBot()},
+    {num:9,text:"Open the middle diamond shape and push both ends inward. Pages come together. Crease the spine — your 16-page zine is done!",svg:svgDiamond()},
+  ];
+  steps.forEach(s=>{
+    const card=document.createElement('div');card.className='step-card';
+    card.innerHTML=s.svg+`<div class="step-desc"><span class="step-num">STEP ${s.num}</span><span class="step-text">${s.text}</span></div>`;
+    grid.appendChild(card);
+  });
+}
+
+// Tutorial SVGs — correct 16-page one-sheet zine sequence
+function svgWrap(content,vw,vh){vw=vw||200;vh=vh||130;return`<svg class="step-svg" viewBox="0 0 ${vw} ${vh}" xmlns="http://www.w3.org/2000/svg" style="background:#f9f9f7">${content}</svg>`;}
+const C='#111',DIM='#ccc',ACC='#ff3e00',BLU='#3366ff',YEL='#ffe600',GRN='#22aa55';
+const ARR=id=>`<defs><marker id="${id}" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="${BLU}"/></marker></defs>`;
+const ARRA=id=>`<defs><marker id="${id}" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="${ACC}"/></marker></defs>`;
+
+// Step 1: Print both sides of one sheet — show front and back
+function svgPrintSheet(){return svgWrap(`
+  <rect x="10" y="8" width="80" height="110" rx="2" fill="#fff" stroke="${C}" stroke-width="2"/>
+  <rect x="13" y="11" width="35" height="24" rx="1" fill="${ACC}" opacity=".25"/>
+  <rect x="51" y="11" width="35" height="24" rx="1" fill="${BLU}" opacity=".2"/>
+  <rect x="13" y="38" width="35" height="24" rx="1" fill="${YEL}" opacity=".45"/>
+  <rect x="51" y="38" width="35" height="24" rx="1" fill="${GRN}" opacity=".25"/>
+  <rect x="13" y="65" width="35" height="24" rx="1" fill="${BLU}" opacity=".2"/>
+  <rect x="51" y="65" width="35" height="24" rx="1" fill="${ACC}" opacity=".2"/>
+  <rect x="13" y="92" width="35" height="24" rx="1" fill="${DIM}" opacity=".5"/>
+  <rect x="51" y="92" width="35" height="24" rx="1" fill="${DIM}" opacity=".5"/>
+  <text x="50" y="122" text-anchor="middle" font-size="7" font-family="monospace" fill="${C}">SIDE 1 (FRONT)</text>
+  <rect x="110" y="8" width="80" height="110" rx="2" fill="#f0f0ee" stroke="${C}" stroke-width="2" stroke-dasharray="4,2"/>
+  <rect x="113" y="11" width="35" height="24" rx="1" fill="${DIM}" opacity=".4"/>
+  <rect x="151" y="11" width="35" height="24" rx="1" fill="${DIM}" opacity=".4"/>
+  <rect x="113" y="38" width="35" height="24" rx="1" fill="${GRN}" opacity=".2"/>
+  <rect x="151" y="38" width="35" height="24" rx="1" fill="${YEL}" opacity=".3"/>
+  <rect x="113" y="65" width="35" height="24" rx="1" fill="${YEL}" opacity=".3"/>
+  <rect x="151" y="65" width="35" height="24" rx="1" fill="${GRN}" opacity=".2"/>
+  <rect x="113" y="92" width="35" height="24" rx="1" fill="${DIM}" opacity=".4"/>
+  <rect x="151" y="92" width="35" height="24" rx="1" fill="${DIM}" opacity=".4"/>
+  <text x="150" y="122" text-anchor="middle" font-size="7" font-family="monospace" fill="${C}">SIDE 2 (FLIP &amp; PRINT)</text>
+  <path d="M93 63 Q100 63 107 63" stroke="${C}" stroke-width="2" fill="none" marker-end="url(#a1)"/>
+  ${ARR('a1')}
+`,200,130);}
+
+// Step 2: Fold long way (hot-dog) — full sheet, fold line down the middle vertically
+function svgFoldLong(){return svgWrap(`
+  <rect x="15" y="10" width="170" height="110" rx="2" fill="#fff" stroke="${C}" stroke-width="1.5"/>
+  <rect x="15" y="10" width="85" height="110" fill="${YEL}" opacity=".15"/>
+  <line x1="100" y1="10" x2="100" y2="120" stroke="${ACC}" stroke-width="2.5" stroke-dasharray="5,3"/>
+  <path d="M60 65 Q100 45 140 65" stroke="${BLU}" stroke-width="2" fill="none" marker-end="url(#a2)"/>
+  <text x="100" y="8" text-anchor="middle" font-size="7" font-family="monospace" fill="${ACC}">FOLD LINE</text>
+  <text x="55" y="125" text-anchor="middle" font-size="7" font-family="monospace" fill="${C}">LEFT HALF</text>
+  <text x="145" y="125" text-anchor="middle" font-size="7" font-family="monospace" fill="${C}">FOLDS ONTO RIGHT</text>
+  ${ARR('a2')}
+`,200,130);}
+
+// Step 3: Fold each open side in half again (long way) → 4 tall thin strips
+function svgFold4Strips(){return svgWrap(`
+  <rect x="55" y="10" width="90" height="110" rx="2" fill="#fff" stroke="${C}" stroke-width="1.5"/>
+  <rect x="55" y="10" width="45" height="110" fill="${YEL}" opacity=".2"/>
+  <line x1="100" y1="10" x2="100" y2="120" stroke="${DIM}" stroke-width="1" stroke-dasharray="3,2"/>
+  <line x1="77" y1="10" x2="77" y2="120" stroke="${ACC}" stroke-width="2" stroke-dasharray="5,3"/>
+  <line x1="122" y1="10" x2="122" y2="120" stroke="${ACC}" stroke-width="2" stroke-dasharray="5,3"/>
+  <path d="M90 50 Q77 40 65 50" stroke="${BLU}" stroke-width="1.5" fill="none" marker-end="url(#a3)"/>
+  <path d="M110 50 Q122 40 135 50" stroke="${BLU}" stroke-width="1.5" fill="none" marker-end="url(#a3)"/>
+  <text x="100" y="8" text-anchor="middle" font-size="7" font-family="monospace" fill="${ACC}">FOLD EACH EDGE IN AGAIN</text>
+  <text x="100" y="128" text-anchor="middle" font-size="7" font-family="monospace" fill="${C}">→ 4 TALL STRIPS</text>
+  ${ARR('a3')}
+`,200,135);}
+
+// Step 4: Unfold flat, then fold short way (hamburger) — sheet now landscape
+function svgFoldShort(){return svgWrap(`
+  <rect x="10" y="20" width="180" height="90" rx="2" fill="#fff" stroke="${C}" stroke-width="1.5"/>
+  <line x1="10" y1="65" x2="190" y2="65" stroke="${ACC}" stroke-width="2.5" stroke-dasharray="5,3"/>
+  <line x1="10" y1="42" x2="190" y2="42" stroke="${DIM}" stroke-width="1" stroke-dasharray="3,2"/>
+  <line x1="10" y1="87" x2="190" y2="87" stroke="${DIM}" stroke-width="1" stroke-dasharray="3,2"/>
+  <path d="M100 35 Q118 65 100 90" stroke="${BLU}" stroke-width="2" fill="none" marker-end="url(#a4)"/>
+  <text x="100" y="15" text-anchor="middle" font-size="7" font-family="monospace" fill="${ACC}">FOLD SHORT WAY (HAMBURGER)</text>
+  <text x="100" y="122" text-anchor="middle" font-size="7" font-family="monospace" fill="${C}">TOP HALF FOLDS DOWN → 8 RECTANGLES TOTAL</text>
+  ${ARR('a4')}
+`,200,128);}
+
+// Step 5: Fold long way again, cut the 3 vertical middle creases
+function svgCut3(){return svgWrap(`
+  <rect x="55" y="10" width="90" height="110" rx="2" fill="#fff" stroke="${C}" stroke-width="1.5"/>
+  <line x1="100" y1="10" x2="100" y2="120" stroke="${DIM}" stroke-width="1" stroke-dasharray="3,2"/>
+  <line x1="77" y1="10" x2="77" y2="120" stroke="${ACC}" stroke-width="2.5" stroke-dasharray="4,2"/>
+  <line x1="122" y1="10" x2="122" y2="120" stroke="${ACC}" stroke-width="2.5" stroke-dasharray="4,2"/>
+  <text x="73" y="35" font-size="10" fill="${ACC}" text-anchor="middle">✂</text>
+  <text x="127" y="35" font-size="10" fill="${ACC}" text-anchor="middle">✂</text>
+  <text x="73" y="95" font-size="10" fill="${ACC}" text-anchor="middle">✂</text>
+  <text x="127" y="95" font-size="10" fill="${ACC}" text-anchor="middle">✂</text>
+  <text x="100" y="7" text-anchor="middle" font-size="7" font-family="monospace" fill="${ACC}">CUT THESE 2 CREASES (TOP &amp; BOTTOM)</text>
+  <text x="100" y="128" text-anchor="middle" font-size="7" font-family="monospace" fill="${C}">FOLDED LONG WAY — CUT INNER CREASES ONLY</text>
+  <rect x="57" y="55" width="17" height="20" fill="${DIM}" opacity=".3"/>
+  <rect x="125" y="55" width="17" height="20" fill="${DIM}" opacity=".3"/>
+`,200,133);}
+
+// Step 6: Cut between pages 5-2 and 13-10 on the inner section — 2 tents
+function svgCutTents(){return svgWrap(`
+  <rect x="10" y="25" width="180" height="80" rx="2" fill="#fff" stroke="${C}" stroke-width="1.5"/>
+  <line x1="10" y1="65" x2="190" y2="65" stroke="${DIM}" stroke-width="1" stroke-dasharray="3,2"/>
+  <line x1="55" y1="25" x2="55" y2="105" stroke="${DIM}" stroke-width="1" stroke-dasharray="2,2"/>
+  <line x1="100" y1="25" x2="100" y2="105" stroke="${DIM}" stroke-width="1" stroke-dasharray="2,2"/>
+  <line x1="145" y1="25" x2="145" y2="105" stroke="${DIM}" stroke-width="1" stroke-dasharray="2,2"/>
+  <!-- highlight inner section cols 2+3 -->
+  <rect x="55" y="25" width="90" height="80" fill="${BLU}" opacity=".08"/>
+  <!-- cut line between 5-2 and 13-10: horizontal through middle of inner section -->
+  <line x1="55" y1="65" x2="145" y2="65" stroke="${ACC}" stroke-width="3"/>
+  <text x="100" y="62" text-anchor="middle" font-size="9" fill="${ACC}">✂</text>
+  <text x="28" y="50" text-anchor="middle" font-size="6" fill="${C}">OUTER</text>
+  <text x="28" y="82" text-anchor="middle" font-size="6" fill="${C}">COLS</text>
+  <text x="100" y="45" text-anchor="middle" font-size="6.5" font-family="monospace" fill="${BLU}">INNER SECTION</text>
+  <text x="100" y="53" text-anchor="middle" font-size="6" fill="${BLU}">(pages 2,5 / 10,13)</text>
+  <text x="100" y="122" text-anchor="middle" font-size="7" font-family="monospace" fill="${C}">CUT INNER MIDDLE CREASE → 2 TENT SHAPES</text>
+`,200,128);}
+
+// Step 7: Fold 4 middle squares inward (looking at side 2 / page 2 columns)
+function svgFoldMiddle(){return svgWrap(`
+  <rect x="10" y="20" width="80" height="90" rx="1" fill="#fff" stroke="${C}" stroke-width="1.5"/>
+  <rect x="10" y="20" width="80" height="45" fill="${YEL}" opacity=".3"/>
+  <text x="50" y="45" text-anchor="middle" font-size="6.5" font-family="monospace" fill="${C}">PAGES 11  12</text>
+  <text x="50" y="88" text-anchor="middle" font-size="6.5" font-family="monospace" fill="${C}">PAGES  4   5</text>
+  <line x1="10" y1="65" x2="90" y2="65" stroke="${DIM}" stroke-width="1" stroke-dasharray="3,2"/>
+  <path d="M50 60 Q65 45 80 55" stroke="${ACC}" stroke-width="1.5" fill="none" marker-end="url(#a7)"/>
+  <path d="M50 70 Q65 85 80 75" stroke="${ACC}" stroke-width="1.5" fill="none" marker-end="url(#a7)"/>
+  <text x="50" y="120" text-anchor="middle" font-size="7" font-family="monospace" fill="${C}">FOLD INWARD</text>
+
+  <rect x="110" y="20" width="80" height="90" rx="1" fill="#fff" stroke="${C}" stroke-width="1.5"/>
+  <rect x="110" y="20" width="80" height="45" fill="${GRN}" opacity=".2"/>
+  <text x="150" y="45" text-anchor="middle" font-size="6.5" font-family="monospace" fill="${C}">COL 2 | COL 3</text>
+  <text x="150" y="65" text-anchor="middle" font-size="6.5" font-family="monospace" fill="${ACC}">→ FOLDED IN ←</text>
+  <text x="150" y="88" text-anchor="middle" font-size="6.5" font-family="monospace" fill="${C}">OUTER COLS FLAT</text>
+  <text x="150" y="120" text-anchor="middle" font-size="7" font-family="monospace" fill="${C}">RESULT</text>
+  ${ARRA('a7')}
+`,200,128);}
+
+// Step 8: Fold top and bottom panels in, then fold the whole thing over
+function svgFoldTopBot(){return svgWrap(`
+  <rect x="55" y="5" width="90" height="120" rx="2" fill="#fff" stroke="${C}" stroke-width="1.5"/>
+  <line x1="55" y1="35" x2="145" y2="35" stroke="${ACC}" stroke-width="2" stroke-dasharray="5,3"/>
+  <line x1="55" y1="95" x2="145" y2="95" stroke="${ACC}" stroke-width="2" stroke-dasharray="5,3"/>
+  <rect x="57" y="7" width="86" height="26" fill="${YEL}" opacity=".4"/>
+  <rect x="57" y="97" width="86" height="26" fill="${YEL}" opacity=".4"/>
+  <path d="M100 28 Q120 35 100 42" stroke="${BLU}" stroke-width="2" fill="none" marker-end="url(#a8)"/>
+  <path d="M100 100 Q120 95 100 88" stroke="${BLU}" stroke-width="2" fill="none" marker-end="url(#a8)"/>
+  <text x="100" y="70" text-anchor="middle" font-size="7" font-family="monospace" fill="${C}">MIDDLE</text>
+  <text x="100" y="80" text-anchor="middle" font-size="7" font-family="monospace" fill="${C}">PAGES</text>
+  <text x="100" y="3" text-anchor="middle" font-size="7" font-family="monospace" fill="${ACC}">FOLD TOP &amp; BOTTOM IN</text>
+  ${ARR('a8')}
+`,200,130);}
+
+// Step 9: Open the middle diamond and push together — done!
+function svgDiamond(){return svgWrap(`
+  <path d="M20 65 L100 15 L180 65 L100 115 Z" fill="${YEL}" opacity=".4" stroke="${C}" stroke-width="2"/>
+  <line x1="20" y1="65" x2="180" y2="65" stroke="${ACC}" stroke-width="2" stroke-dasharray="4,2"/>
+  <path d="M100 15 L100 115" stroke="${DIM}" stroke-width="1" stroke-dasharray="3,2"/>
+  <path d="M40 65 L20 65" stroke="${BLU}" stroke-width="2.5" fill="none" marker-end="url(#a9)"/>
+  <path d="M160 65 L180 65" stroke="${BLU}" stroke-width="2.5" fill="none" marker-end="url(#a9r)"/>
+  <text x="100" y="68" text-anchor="middle" font-size="8" font-family="monospace" fill="${C}">PUSH ← →</text>
+  <text x="100" y="128" text-anchor="middle" font-size="8" font-family="monospace" fill="${ACC}">★ ZINE DONE! ★</text>
+  <text x="100" y="10" text-anchor="middle" font-size="7" font-family="monospace" fill="${C}">OPEN DIAMOND, PUSH ENDS IN</text>
+  <defs>
+    <marker id="a9" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="${BLU}"/></marker>
+    <marker id="a9r" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6 Z" fill="${BLU}"/></marker>
+  </defs>
+`,200,133);}
+
+// ─── INIT ───
+function init(){
+  // sidebar nav
+  const nav=document.getElementById('nav-list');nav.innerHTML='';
+  viewsData.forEach((v,i)=>{
+    const div=document.createElement('div');
+    div.className='nav-item'+(i===0?' active':'');
+    div.innerHTML=`<div class="nav-label">${v.label}</div><div class="nav-thumb-container"></div>`;
+    div.onclick=()=>{activeView=i;renderUI();};
+    nav.appendChild(div);
+  });
+  renderAllNavThumbs();
+  renderUI();
+  initDrag();
+  initPreviewDrop();
+}
+window.onload=init;
+</script>
 </body>
 </html>
